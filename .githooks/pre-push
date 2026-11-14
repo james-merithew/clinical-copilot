@@ -1,0 +1,111 @@
+#!/bin/sh
+# Pre-push gate — the AUTHORITATIVE eval gate for this repo (W2_ARCHITECTURE.md §8.5).
+#
+# Runs, in order (all hermetic — zero API keys, zero DB, seconds not minutes):
+#   0. packaging guard: eval-critical files survive `git archive` (export-ignore)
+#   1. ruff check copilot/app + redteam + contracts  (lint)
+#   2. pytest copilot/tests + redteam + contracts    (unit + integration + gate-math)
+#   3. golden runner (hermetic)        (65-case boolean-rubric eval set)
+#   4. golden gate vs baseline.json    (>5% regression or floor breach -> BLOCK)
+#   5. adversarial runner (hermetic)   (redteam suite vs a deterministic stub target)
+#   6. adversarial gate vs baseline    (resilience floors + manifest + OWASP coverage)
+# Any non-zero exit BLOCKS the push. Network-y audits (pip-audit, bandit) run
+# in .gitlab-ci.yml — they don't belong in the developer's inner loop.
+#
+# Install: scripts/install-hooks.ps1 (Windows) or scripts/install-hooks.sh
+# (both just run: git config core.hooksPath .githooks)
+#
+# Git-Bash-on-Windows-safe: POSIX sh only; venv python resolved below.
+# Override the interpreter with COPILOT_PYTHON if your venv lives elsewhere.
+
+set -e
+
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
+
+# ---- Resolve the venv python -------------------------------------------------
+# Worktree-aware: in a linked worktree the venv usually lives in the MAIN
+# checkout, which is the parent of the common git dir.
+COMMON=$(git rev-parse --git-common-dir)
+case "$COMMON" in
+  /*|[A-Za-z]:*) MAIN_ROOT=$(dirname "$COMMON") ;;
+  *)             MAIN_ROOT="$ROOT" ;;
+esac
+
+PY=""
+for cand in \
+    "$COPILOT_PYTHON" \
+    "$ROOT/copilot/.venv/Scripts/python.exe" \
+    "$ROOT/copilot/.venv/bin/python" \
+    "$MAIN_ROOT/copilot/.venv/Scripts/python.exe" \
+    "$MAIN_ROOT/copilot/.venv/bin/python"
+do
+  if [ -n "$cand" ] && [ -x "$cand" ]; then PY="$cand"; break; fi
+done
+if [ -z "$PY" ]; then
+  if command -v python3 >/dev/null 2>&1; then PY=python3;
+  elif command -v python >/dev/null 2>&1; then PY=python;
+  else
+    echo "pre-push: no python found (set COPILOT_PYTHON or create copilot/.venv)" >&2
+    exit 1
+  fi
+fi
+echo "pre-push gate: using $PY"
+
+# ---- [0/6] packaging guard: eval-critical files must survive `git archive` -----
+# OpenEMR's inherited .gitattributes marks tests/ + tools/ export-ignore (unanchored),
+# which would strip copilot/app/tools, copilot/tests, and redteam/tests from a clean
+# export -> a submission zip fails importing app.tools.* before the gate (Week-2-final
+# bug). Cheap, no-install check that our -export-ignore carve-outs are still intact.
+echo "[0/6] packaging guard (git archive keeps tests/tools)"
+for want in copilot/app/tools/labs.py copilot/tests/ingest/_helpers.py redteam/tests; do
+  if ! git archive HEAD -- "$want" 2>/dev/null | tar -tf - 2>/dev/null | grep -q .; then
+    echo "pre-push: FAIL — '$want' is stripped from git archive exports" >&2
+    echo "pre-push:   a .gitattributes export-ignore rule is eating it; add a" >&2
+    echo "pre-push:   '<path> -export-ignore' carve-out. See scripts/verify_clean_archive.sh." >&2
+    exit 1
+  fi
+done
+
+# ---- [phi] standalone PHI-detection scan over committed observability outputs --
+# Named check for invariant #8 ("no PHI in observability"). Fast, no-runtime here —
+# the live log-capture scan runs inside pytest (test_phi_scan.py, `slow`) at [2/6].
+echo "[phi] PHI-detection scan (committed observability artifacts)"
+"$PY" copilot/scripts/phi_scan.py --no-runtime
+
+echo "[1/6] ruff check copilot/app + redteam + contracts"
+"$PY" -m ruff check copilot/app redteam contracts
+
+echo "[2/6] pytest (copilot + redteam + contracts) -q"
+"$PY" -m pytest copilot/tests redteam contracts -q
+
+echo "[3/6] golden eval runner (hermetic)"
+"$PY" copilot/evals/golden/runner.py --mode hermetic \
+      --out copilot/evals/golden/results.json
+
+echo "[4/6] golden eval gate vs baseline"
+"$PY" copilot/evals/golden/gate.py \
+      --results copilot/evals/golden/results.json \
+      --baseline copilot/evals/golden/baseline.json
+
+echo "[5/6] adversarial runner (hermetic)"
+"$PY" -m redteam.runner --target hermetic \
+      --out evals/adversarial/results.json
+
+echo "[6/6] adversarial gate vs baseline"
+"$PY" -m redteam.gate \
+      --results evals/adversarial/results.json \
+      --baseline evals/adversarial/baseline.json
+
+# ---- [audit] opt-in dependency + static security scan (network-y; off by default) --
+# The default gate stays fast and offline. Set COPILOT_SECURITY_AUDIT=1 to run the same
+# pip-audit + bandit scan CI runs — the runner-less fallback so the audit is always
+# reachable, not stranded behind a GitLab runner.
+if [ "${COPILOT_SECURITY_AUDIT:-}" = "1" ]; then
+  echo "[audit] security_audit.sh (pip-audit + bandit)"
+  PYTHON="$PY" sh copilot/scripts/security_audit.sh
+else
+  echo "[audit] skipped (set COPILOT_SECURITY_AUDIT=1 to run pip-audit + bandit)"
+fi
+
+echo "pre-push gate: PASS"

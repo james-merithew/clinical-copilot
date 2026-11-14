@@ -1,0 +1,43 @@
+{
+  "_case": "rf-009",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_medications",
+          "input": {},
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "Metformin 1000 mg active",
+                "handles": [
+                  "med:0",
+                  "med:99"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

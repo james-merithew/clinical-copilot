@@ -1,0 +1,35 @@
+meta {
+  name: 07 Document meta (pid 101)
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/documents/{{documentId}}/meta?pid=101
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:query {
+  pid: 101
+}
+
+docs {
+  Document metadata for the click-to-source viewer. `document_id` comes from the
+  `documentId` var set by request 06 (or set it manually). `pid` is required and
+  re-checked: the document<->patient ownership check runs on every call, so a
+  document id is never a capability by itself (404 for the wrong patient).
+
+  Expect: DocumentMeta { document_id, pid, mimetype, page_count, pages[] } where
+  each page carries its width/height for overlay geometry.
+}
+
+assert {
+  res.status: eq 200
+  res.body.document_id: isDefined
+  res.body.page_count: isDefined
+}

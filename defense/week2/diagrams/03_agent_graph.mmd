@@ -1,0 +1,26 @@
+flowchart TD
+    Q["/chat turn<br/>(one correlation ID for the whole graph)"] --> SUP
+
+    subgraph G["In-house graph - copilot/app/graph/"]
+        SUP["Supervisor<br/>one LLM call, exactly 3 routing tools,<br/>tool_choice=any, max 4 routes, 20s deadline"]
+        IE["Worker: intake-extractor<br/>doc / extraction-status tools only<br/>bounded sub-loop, max 3 iterations"]
+        ER["Worker: evidence-retriever<br/>search_guidelines only<br/>bounded sub-loop, max 2 iterations"]
+        ANS["Answerer<br/>= the extracted Week 1 tool loop<br/>(read-only patient tools)"]
+        ES[("Turn-global EvidenceSet<br/>patient handles enc:/med:/lab:/...<br/>+ guideline handles gl:")]
+    end
+
+    SUP -->|"route_to_intake_extractor"| IE
+    SUP -->|"route_to_evidence_retriever"| ER
+    SUP -->|"finalize"| ANS
+    IE -->|"WorkerResult + Handoff record"| SUP
+    ER -->|"WorkerResult + Handoff record"| SUP
+    IE --> ES
+    ER --> ES
+    ES --> ANS
+
+    ANS --> VER["Deterministic Verifier (exit gate)<br/>provenance + value grounding + keyword overlap<br/>+ separation rule: gl-only claims can never<br/>enter the patient briefing"]
+    VER --> RESP["AgentResponse<br/>briefing + guideline_evidence (separate header)<br/>+ handoffs list + quarantined claims"]
+
+    SUP -.->|"every transition"| SINKS["Handoff sinks x3:<br/>1. log_event (enum fields only)<br/>2. LangSmith child run (worker = child span)<br/>3. AgentResponse.handoffs"]
+    IE -.-> SINKS
+    ER -.-> SINKS

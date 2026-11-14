@@ -1,0 +1,2285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Clinical Co-Pilot</title>
+<style>
+  :root {
+    --canvas: #F6F9FB;
+    --card: #FFFFFF;
+    --card-2: #F1F6F9;
+    --hair: #E6EDF1;
+    --hair-strong: #D3DEE5;
+    --text: #0B1524;
+    --muted: #5C6B7A;
+    --faint: #8A9AA6;
+
+    --accent: #0FB5A6;
+    --accent-hover: #0CA093;
+    --accent-soft: rgba(15,181,166,.10);
+    --accent-line: rgba(15,181,166,.28);
+    --sky: #2E9BD6;
+
+    --crit: #E5484D;   --crit-soft: #FDECEC; --crit-line: #F3C4C5; --crit-ink: #B4232A;
+    --warn: #E8A317;   --warn-soft: #FCF3E1; --warn-line: #EFDBA8; --warn-ink: #9A6E08;
+    --info: #2E9BD6;   --info-soft: #E9F3FB; --info-line: #C3E0F2; --info-ink: #1F6FA0;
+    --good: #16A37B;   --good-soft: #E6F6EF; --good-line: #BFE6D4; --good-ink: #0E7C5D;
+
+    --cite-bg: #EEF3F6; --cite-line: #E0E9EE; --cite-ink: #5C6B7A;
+    --shadow: 0 1px 2px rgba(11,21,36,.05), 0 4px 14px rgba(11,21,36,.04);
+    --shadow-lift: 0 2px 6px rgba(11,21,36,.08), 0 12px 30px rgba(11,21,36,.08);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --user-bubble: #0FB5A6;
+    --user-ink: #FFFFFF;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: #0C1214;
+      --card: #141D21;
+      --card-2: #182329;
+      --hair: #22303A;
+      --hair-strong: #2E3F4A;
+      --text: #E7EEF2;
+      --muted: #8A9AA6;
+      --faint: #6E7F8B;
+
+      --accent: #17C4B4;
+      --accent-hover: #2AD3C3;
+      --accent-soft: rgba(23,196,180,.14);
+      --accent-line: rgba(23,196,180,.34);
+      --sky: #4FB0E4;
+
+      --crit: #F0666B;   --crit-soft: rgba(229,72,77,.15); --crit-line: rgba(229,72,77,.38); --crit-ink: #F5A3A6;
+      --warn: #EEB43F;   --warn-soft: rgba(232,163,23,.15); --warn-line: rgba(232,163,23,.36); --warn-ink: #F0CB78;
+      --info: #4FB0E4;   --info-soft: rgba(46,155,214,.15); --info-line: rgba(46,155,214,.36); --info-ink: #9CD0EE;
+      --good: #35BE95;   --good-soft: rgba(22,163,123,.15); --good-line: rgba(22,163,123,.36); --good-ink: #7BDCBB;
+
+      --cite-bg: #1A252B; --cite-line: #29373F; --cite-ink: #93A4B0;
+      --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.28);
+      --shadow-lift: 0 2px 8px rgba(0,0,0,.45), 0 16px 40px rgba(0,0,0,.4);
+      --user-bubble: #0FB5A6;
+      --user-ink: #04211E;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
+  body {
+    background: var(--canvas);
+    color: var(--text);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    display: flex;
+    justify-content: center;
+  }
+  ::selection { background: var(--accent-soft); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  .app {
+    display: flex; flex-direction: column;
+    width: 100%; max-width: 860px;
+    height: 100vh; height: 100dvh;
+    margin: 0 auto;                          /* centered in any host width */
+    background: var(--canvas);
+    border-left: 1px solid var(--hair);
+    border-right: 1px solid var(--hair);
+    position: relative;
+  }
+
+  /* ---------- Overlay embed (floating helper inside the EMR chart) ---------- */
+  body.overlay { background: transparent !important; }
+  body.overlay .app {
+    max-width: none; border: 1px solid var(--hair); border-radius: 18px;
+    box-shadow: 0 18px 60px rgba(9, 30, 40, .30);
+    overflow: hidden;
+  }
+  body.overlay.closed .app { display: none; }
+  #launcher {
+    /* Fixed size, bottom-right — NEVER `inset` (that scales the bubble to the
+       whole iframe, so a large-in-closed-state frame renders a giant circle). */
+    display: none; position: fixed; bottom: 8px; right: 8px;
+    width: 60px; height: 60px;
+    border: none; cursor: pointer; border-radius: 50%;
+    background: linear-gradient(140deg, var(--accent), var(--sky));
+    color: #fff; align-items: center; justify-content: center;
+    box-shadow: 0 6px 22px rgba(15,181,166,.45);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  #launcher:hover { transform: scale(1.06); box-shadow: 0 8px 26px rgba(15,181,166,.55); }
+  #launcher svg { width: 26px; height: 26px; }
+  body.overlay.closed #launcher { display: inline-flex; }
+  #launch-badge {
+    position: absolute; top: -2px; right: -2px; min-width: 20px; height: 20px;
+    padding: 0 5px; border-radius: 999px; display: none;
+    align-items: center; justify-content: center;
+    font-size: 11.5px; font-weight: 800; color: #fff;
+    background: var(--crit, #e5484d); border: 2px solid #fff;
+  }
+  #launch-badge.warn { background: var(--warn, #f5a524); }
+  #launch-badge.show { display: inline-flex; }
+  .minbtn {
+    display: none; border: none; background: transparent; cursor: pointer;
+    color: var(--muted); padding: 6px; border-radius: 8px; margin-left: 4px;
+  }
+  .minbtn:hover { background: var(--card-2); color: var(--text); }
+  .minbtn svg { width: 17px; height: 17px; }
+  body.overlay .minbtn { display: inline-flex; }
+  /* The ops-dashboard link shows everywhere (standalone + overlay); only the
+     minimize button is overlay-only. */
+  #ops-link { display: inline-flex; align-items: center; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--hair);
+    background: color-mix(in srgb, var(--card) 72%, transparent);
+    backdrop-filter: saturate(1.4) blur(8px);
+    position: sticky; top: 0; z-index: 30;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .logo {
+    width: 30px; height: 30px; flex: 0 0 auto; border-radius: 9px;
+    background: linear-gradient(140deg, var(--accent), var(--sky));
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; box-shadow: 0 2px 8px rgba(15,181,166,.35);
+  }
+  .logo svg { width: 17px; height: 17px; }
+  .brand .name { font-size: 15px; font-weight: 680; letter-spacing: -.01em; line-height: 1.1; }
+  .brand .sub { font-size: 11px; color: var(--faint); font-weight: 500; letter-spacing: .01em; }
+
+  .seg {
+    margin-left: auto;
+    display: inline-flex; padding: 3px; gap: 3px;
+    background: var(--card-2); border: 1px solid var(--hair);
+    border-radius: 999px;
+  }
+  .seg button {
+    font: inherit; font-size: 13px; font-weight: 600; letter-spacing: -.005em;
+    border: none; background: transparent; color: var(--muted);
+    padding: 7px 15px; border-radius: 999px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: color .15s, background .15s, box-shadow .15s;
+  }
+  .seg button svg { width: 15px; height: 15px; }
+  .seg button[aria-selected="true"] {
+    background: var(--card); color: var(--text);
+    box-shadow: var(--shadow);
+  }
+  @media (prefers-color-scheme: dark) {
+    .seg button[aria-selected="true"] { background: #223038; }
+  }
+
+  /* ---------- Views ---------- */
+  .view { display: none; flex: 1 1 auto; min-height: 0; flex-direction: column; }
+  .view.active { display: flex; }
+
+  /* ---------- Patient header ---------- */
+  .patient-bar {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--hair);
+    background: var(--card);
+    z-index: 10;
+  }
+  .avatar {
+    width: 42px; height: 42px; flex: 0 0 auto; border-radius: 12px;
+    background: var(--accent-soft); color: var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 16px; letter-spacing: -.02em;
+    border: 1px solid var(--accent-line);
+  }
+  .pt-id { min-width: 0; flex: 1 1 auto; }
+  .pt-name {
+    font-size: 20px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .pt-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+  .pt-meta .demo { font-size: 13px; color: var(--muted); font-weight: 500; }
+  .pid-switch { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .pid-switch label { font-size: 12px; color: var(--faint); font-weight: 500; }
+  .pid-switch input {
+    width: 62px; padding: 7px 9px; border: 1px solid var(--hair-strong);
+    border-radius: 9px; background: var(--card-2); color: var(--text);
+    font: inherit; font-size: 13px; text-align: center; font-variant-numeric: tabular-nums;
+  }
+  .pid-switch input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+  /* ---------- Patient scroll region ---------- */
+  .pt-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 16px 8px; }
+
+  /* ---------- Dashboard ---------- */
+  .dashboard { display: flex; flex-direction: column; gap: 16px; }
+  .dash-section { display: flex; flex-direction: column; gap: 9px; }
+  .sec-label {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--faint); margin: 2px 2px 1px; display: flex; align-items: center; gap: 8px;
+  }
+  .sec-label .n {
+    color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums;
+    background: var(--card-2); border: 1px solid var(--hair);
+    min-width: 19px; height: 19px; padding: 0 6px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 11px;
+  }
+
+  /* allergy safety chips (atop the panel) */
+  .alg-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .alg-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 650; padding: 6px 11px; border-radius: 999px;
+    background: var(--crit-soft); color: var(--crit-ink); border: 1px solid var(--crit-line);
+  }
+  .alg-chip .warn-ico { font-size: 12px; line-height: 1; }
+
+  /* ---- Alerts & Notifications ---- */
+  .alert-card {
+    position: relative; overflow: hidden;
+    background: var(--card); border: 1px solid var(--hair);
+    border-radius: var(--radius-sm); box-shadow: var(--shadow);
+    transition: box-shadow .18s, border-color .18s;
+  }
+  .alert-card:hover { box-shadow: var(--shadow-lift); }
+  .alert-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+  .alert-card.crit::before { background: var(--crit); }
+  .alert-card.warn::before { background: var(--warn); }
+  .alert-card.good::before { background: var(--good); }
+  .alert-head {
+    width: 100%; text-align: left; border: none; background: transparent; font: inherit; color: var(--text);
+    display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 12px 13px 12px 17px;
+  }
+  .alert-card.calm .alert-head { cursor: default; }
+  .alert-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; margin-top: 5px; }
+  .alert-card.crit .alert-dot { background: var(--crit); box-shadow: 0 0 0 3px var(--crit-soft); }
+  .alert-card.warn .alert-dot { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-soft); }
+  .alert-card.good .alert-dot { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+  .alert-body { flex: 1 1 auto; min-width: 0; }
+  .alert-titlerow { display: flex; align-items: baseline; gap: 10px; }
+  .alert-title { font-size: 14.5px; font-weight: 700; letter-spacing: -.01em; color: var(--text); flex: 1 1 auto; min-width: 0; }
+  .alert-card.calm .alert-title { color: var(--good-ink); font-weight: 650; }
+  .alert-side { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+  .alert-sev { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+  .alert-card.crit .alert-sev { color: var(--crit-ink); }
+  .alert-card.warn .alert-sev { color: var(--warn-ink); }
+  .alert-chev { color: var(--faint); display: inline-flex; transition: transform .2s ease; }
+  .alert-chev svg { width: 15px; height: 15px; display: block; }
+  .alert-card.open .alert-chev { transform: rotate(90deg); }
+  .alert-desc {
+    font-size: 13px; color: var(--muted); line-height: 1.45; margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .alert-card.open .alert-desc { white-space: normal; }
+  .alert-cites { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .2s ease; }
+  .alert-card.open .alert-cites { grid-template-rows: 1fr; }
+  .alert-cites > .inner { overflow: hidden; }
+  .alert-cites .inner { padding: 0 13px 12px 17px; }
+
+  /* ---- Metric cards (vitals + labs) ---- */
+  .metric-lg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 9px; }
+  .metric-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 9px; }
+  .metric-card {
+    position: relative;
+    background: var(--card); border: 1px solid var(--hair); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow); overflow: hidden; transition: box-shadow .18s, border-color .18s;
+  }
+  /* Status accent rail on the left edge — makes each tile read as a finished,
+     at-a-glance clinical signal rather than a bare number in a box. */
+  .metric-card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--good); border-top-left-radius: var(--radius-sm); border-bottom-left-radius: var(--radius-sm);
+  }
+  .metric-card.st-elevated::before, .metric-card.st-low::before { background: var(--warn); }
+  .metric-card.st-high::before { background: var(--crit); }
+  .metric-card:hover { box-shadow: var(--shadow-lift); border-color: var(--hair-strong); }
+  .metric-head { width: 100%; text-align: left; border: none; background: transparent; font: inherit; color: var(--text); cursor: pointer; display: block; }
+  .metric-card.lg .metric-head { padding: 13px 14px 13px 16px; }
+  .metric-card.tile .metric-head { padding: 11px 12px 11px 14px; }
+  .m-top, .t-top { display: flex; align-items: center; gap: 8px; }
+  .m-label, .t-label {
+    font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: var(--muted);
+    flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .m-label { font-size: 12px; }
+  .t-label { font-size: 11px; }
+  .m-chev { color: var(--faint); display: inline-flex; transition: transform .2s ease; flex: 0 0 auto; }
+  .m-chev svg { width: 15px; height: 15px; display: block; }
+  .metric-card.open .m-chev { transform: rotate(90deg); }
+  .m-valrow { display: flex; align-items: baseline; gap: 6px; margin-top: 9px; }
+  .m-value { font-size: 30px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .m-unit { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .m-sub { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; }
+  .m-statusword { font-size: 12.5px; font-weight: 700; }
+  .m-latest { font-size: 11px; color: var(--faint); font-weight: 600; }
+  .t-value { font-size: 22px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; margin-top: 7px; line-height: 1.05; }
+  .t-value .t-unit { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+  .t-status { font-size: 11.5px; font-weight: 700; margin-top: 4px; }
+  .m-detail { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .2s ease; }
+  .metric-card.open .m-detail { grid-template-rows: 1fr; }
+  .m-detail > .inner { overflow: hidden; }
+  .metric-card.lg .m-detail .inner { padding: 0 14px 13px 16px; }
+  .metric-card.tile .m-detail .inner { padding: 0 12px 12px 14px; }
+  .m-spark { margin: 4px 0 8px; }
+  .m-cite { margin-top: 8px; }
+  .spark { display: inline-block; line-height: 0; }
+  .hist-row { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; padding: 3px 0; color: var(--muted); border-top: 1px solid var(--hair); }
+  .hist-row:first-child { border-top: none; }
+  .hist-row .hv { font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+  .hist-row .hv.ab { color: var(--crit); }
+
+  /* T5: lab trend chart card (chat augmentation for the lab_trend chip) */
+  .turn.assistant.trend-turn .bubble { width: 94%; }
+  .trend-card .trend-title {
+    font-size: 12px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .trend-sec { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hair); }
+  .trend-sec:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+  .trend-name { font-size: 13.5px; font-weight: 700; margin-bottom: 5px; }
+  .trend-chart svg { width: 100%; height: auto; display: block; }
+  .trend-hist { margin-top: 6px; }
+  .trend-hist summary {
+    cursor: pointer; list-style: none; font-size: 11.5px; font-weight: 650; color: var(--muted);
+  }
+  .trend-hist summary::-webkit-details-marker { display: none; }
+  .trend-hist summary .tw { display: inline-block; margin-right: 4px; transition: transform .15s ease; }
+  .trend-hist[open] summary .tw { transform: rotate(90deg); }
+  .trend-cite { margin-top: 6px; }
+
+  /* footer prompt into chat */
+  .ask-foot {
+    width: 100%; text-align: left; font: inherit; cursor: pointer;
+    display: flex; align-items: center; gap: 9px; padding: 11px 13px;
+    background: var(--accent-soft); border: 1px solid var(--accent-line); border-radius: var(--radius-sm);
+    color: var(--accent); font-size: 13.5px; font-weight: 650;
+    transition: background .15s;
+  }
+  .ask-foot:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+  .ask-foot .fi { display: inline-flex; flex: 0 0 auto; }
+  .ask-foot .fi svg { width: 16px; height: 16px; }
+  .ask-foot .arr { margin-left: auto; display: inline-flex; flex: 0 0 auto; }
+  .ask-foot .arr svg { width: 15px; height: 15px; }
+
+  /* citation chip */
+  .cites { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .cite {
+    display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+    font-size: 10.5px; line-height: 1.3; padding: 2px 7px;
+    background: var(--cite-bg); border: 1px solid var(--cite-line);
+    border-radius: 999px; color: var(--cite-ink);
+  }
+  .cite code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10px; color: var(--accent);
+  }
+  .cite .lbl { color: var(--cite-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* flags inside can't-miss */
+  .flagline { padding: 9px 11px; border-radius: var(--radius-sm); border: 1px solid; margin-top: 8px; }
+  .flagline:first-child { margin-top: 0; }
+  .flagline.critical { background: var(--crit-soft); border-color: var(--crit-line); }
+  .flagline.warning { background: var(--warn-soft); border-color: var(--warn-line); }
+  .flagline.info { background: var(--info-soft); border-color: var(--info-line); }
+  .flagline .fmsg { font-size: 13.5px; font-weight: 550; line-height: 1.45; }
+  .flagline.critical .fmsg { color: var(--crit-ink); }
+  .flagline.warning .fmsg { color: var(--warn-ink); }
+  .flagline.info .fmsg { color: var(--info-ink); }
+  .flagline .fkind { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; opacity: .8; margin-bottom: 3px; }
+
+  /* ---------- Conversation ---------- */
+  .conv-label {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--faint); margin: 20px 4px 10px; display: flex; align-items: center; gap: 8px;
+  }
+  .conv-label::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--hair); }
+  .transcript { display: flex; flex-direction: column; gap: 14px; padding-bottom: 4px; }
+  .turn { display: flex; flex-direction: column; max-width: 100%; }
+  .turn.user { align-items: flex-end; }
+  .turn.assistant { align-items: flex-start; }
+  .bubble { max-width: 86%; padding: 11px 14px; border-radius: 16px; word-wrap: break-word; overflow-wrap: anywhere; }
+  .turn.user .bubble { background: var(--user-bubble); color: var(--user-ink); border-bottom-right-radius: 5px; font-weight: 550; box-shadow: var(--shadow); }
+  .turn.assistant .bubble { background: var(--card); border: 1px solid var(--hair); border-bottom-left-radius: 5px; max-width: 94%; box-shadow: var(--shadow); }
+  .turn.error .bubble { background: var(--crit-soft); border: 1px solid var(--crit-line); color: var(--crit-ink); }
+  .meta { font-size: 10.5px; color: var(--faint); margin: 4px 6px 0; font-variant-numeric: tabular-nums; }
+
+  .claim { padding: 3px 0; }
+  .claim + .claim { border-top: 1px dashed var(--hair); margin-top: 9px; padding-top: 10px; }
+  .claim-text { margin: 0; line-height: 1.5; }
+
+  .qbox { margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--card-2); border: 1px dashed var(--hair-strong); }
+  .qhead { font-size: 12px; font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .qclaim { font-size: 13px; padding: 4px 0; color: var(--muted); }
+  .qclaim + .qclaim { border-top: 1px dashed var(--hair); }
+
+  .degraded { margin-bottom: 10px; padding: 9px 12px; border-radius: var(--radius-sm); background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn-ink); font-size: 13px; font-weight: 600; }
+  .degraded .n { font-weight: 400; opacity: .92; font-size: 12.5px; margin-top: 2px; }
+  .notes-line { margin-top: 8px; font-size: 12.5px; color: var(--muted); font-style: italic; }
+
+  .achips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip {
+    font: inherit; font-size: 13px; font-weight: 600; letter-spacing: -.005em;
+    padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    background: var(--accent-soft); color: var(--accent);
+    border: 1px solid var(--accent-line);
+    transition: background .15s, transform .06s, box-shadow .15s;
+  }
+  .chip:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .chip:active { transform: translateY(1px); }
+  .chip:disabled { opacity: .5; cursor: default; }
+
+  .typing { display: inline-flex; gap: 4px; align-items: center; padding: 3px 0; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); animation: blink 1.2s infinite ease-in-out; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100% { opacity: .3; } 40% { opacity: 1; } }
+
+  /* ---------- Week 2: citation union (patient_record / document / guideline) ---------- */
+  .cite.click { cursor: pointer; transition: background .15s, border-color .15s; }
+  .cite.click:hover { background: var(--accent-soft); border-color: var(--accent-line); }
+  .cite-doc code { color: var(--sky); }
+  .cite-gl { background: var(--info-soft); border-color: var(--info-line); }
+  .cite-gl code { color: var(--info-ink); }
+  .cite-gl.click:hover { background: color-mix(in srgb, var(--info) 18%, transparent); border-color: var(--info-line); }
+
+  /* Guideline evidence — reference knowledge, VISUALLY separated from patient facts */
+  .gl-section { margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--info-soft); border: 1px solid var(--info-line); }
+  .gl-head { font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--info-ink); display: flex; gap: 6px; align-items: center; }
+  .gl-sub { font-size: 11px; color: var(--muted); margin: 2px 0 8px; }
+  .gl-claim { font-size: 13.5px; padding: 5px 0; line-height: 1.5; }
+  .gl-claim + .gl-claim { border-top: 1px dashed var(--info-line); }
+
+  /* guideline evidence popover */
+  .gl-pop {
+    position: fixed; z-index: 95; max-width: 340px; min-width: 240px;
+    background: var(--card); border: 1px solid var(--hair-strong);
+    border-radius: var(--radius-sm); box-shadow: var(--shadow-lift); padding: 12px 14px;
+  }
+  .gl-pop .gp-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .gl-pop .gp-sec { font-size: 11px; color: var(--faint); margin-bottom: 8px; }
+  .gl-pop .gp-quote { font-size: 12.5px; color: var(--muted); line-height: 1.5; border-left: 3px solid var(--info-line); padding-left: 9px; margin: 0 0 8px; font-style: italic; }
+  .gl-pop .gp-src { font-size: 11.5px; color: var(--muted); display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+  .gl-pop .gp-src a { color: var(--sky); font-weight: 600; text-decoration: none; word-break: break-all; }
+  .gl-pop .gp-src a:hover { text-decoration: underline; }
+  .gl-pop .gp-note { font-size: 10.5px; color: var(--faint); margin-top: 8px; border-top: 1px solid var(--hair); padding-top: 6px; }
+
+  /* handoff trail — "how this answer was assembled" (collapsed by default) */
+  .handoffs { margin: 6px 6px 0; font-size: 12px; color: var(--muted); max-width: 94%; }
+  .handoffs summary {
+    cursor: pointer; font-size: 11px; font-weight: 700; color: var(--faint);
+    text-transform: uppercase; letter-spacing: .05em; list-style: none; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .handoffs summary::-webkit-details-marker { display: none; }
+  .handoffs summary .tw { display: inline-block; transition: transform .15s; }
+  .handoffs[open] summary .tw { transform: rotate(90deg); }
+  .handoffs .hops { margin-top: 6px; border: 1px solid var(--hair); border-radius: var(--radius-sm); background: var(--card); padding: 4px 10px; }
+  .hop { display: flex; gap: 8px; padding: 5px 0; border-top: 1px dashed var(--hair); align-items: baseline; flex-wrap: wrap; }
+  .hop:first-child { border-top: none; }
+  .hop .seq { font-variant-numeric: tabular-nums; color: var(--faint); flex: 0 0 auto; }
+  .hop .path { font-weight: 650; color: var(--text); flex: 0 0 auto; }
+  .hop .route { font-size: 10.5px; font-weight: 700; color: var(--info-ink); background: var(--info-soft); border: 1px solid var(--info-line); border-radius: 999px; padding: 1px 7px; }
+  .hop .ms { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--faint); }
+  .hop .why { flex-basis: 100%; font-size: 11.5px; color: var(--muted); }
+
+  /* ---------- Week 2: document viewer with bbox overlay (D7 / §5.3) ---------- */
+  .dv-backdrop {
+    position: fixed; inset: 0; z-index: 90; background: rgba(7, 15, 20, .55);
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .dv-backdrop.open { display: flex; }
+  .dv-panel {
+    width: min(760px, 96vw); max-height: 94vh; display: flex; flex-direction: column;
+    background: var(--card); border: 1px solid var(--hair-strong);
+    border-radius: var(--radius); box-shadow: var(--shadow-lift); overflow: hidden;
+  }
+  .dv-top { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--hair); }
+  .dv-title { font-weight: 700; font-size: 14px; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dv-close { border: none; background: transparent; cursor: pointer; color: var(--muted); padding: 6px; border-radius: 8px; flex: 0 0 auto; }
+  .dv-close:hover { background: var(--card-2); color: var(--text); }
+  .dv-close svg { width: 16px; height: 16px; display: block; }
+  .dv-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--faint); padding: 8px 14px 0; }
+  .dv-legend .k { display: inline-flex; align-items: center; gap: 5px; }
+  .dv-legend .sw { width: 14px; height: 10px; border: 2px solid var(--accent); border-radius: 2px; display: inline-block; }
+  .dv-legend .sw.approx { border-style: dashed; border-color: var(--warn); }
+  .dv-body { overflow: auto; padding: 12px 14px 14px; background: var(--card-2); flex: 1 1 auto; min-height: 120px; }
+  .dv-banner { margin-bottom: 10px; padding: 9px 12px; border-radius: var(--radius-sm); background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn-ink); font-size: 12.5px; font-weight: 600; }
+  .dv-stage { position: relative; margin: 0 auto; line-height: 0; box-shadow: var(--shadow); }
+  .dv-stage img { width: 100%; display: block; border-radius: 4px; background: #fff; }
+  .dv-box { position: absolute; border: 2px solid var(--accent); border-radius: 3px; background: rgba(15,181,166,.08); }
+  .dv-box.approx { border-style: dashed; border-color: var(--warn); background: rgba(232,163,23,.10); }
+  .dv-box .tag {
+    position: absolute; top: -17px; left: -2px; font-size: 9px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .04em; line-height: 1.5;
+    background: var(--warn); color: #fff; padding: 0 5px; border-radius: 4px; white-space: nowrap;
+  }
+  .dv-box.hl { border-color: var(--sky); background: rgba(46,155,214,.16); box-shadow: 0 0 0 3px rgba(46,155,214,.30); }
+  .dv-box.hl.approx { border-color: var(--warn); box-shadow: 0 0 0 3px rgba(232,163,23,.30); }
+  .dv-nav { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--hair); }
+  .dv-nav button {
+    font: inherit; font-size: 12.5px; font-weight: 650; padding: 6px 12px; border-radius: 9px;
+    border: 1px solid var(--hair-strong); background: var(--card-2); color: var(--text); cursor: pointer;
+  }
+  .dv-nav button:disabled { opacity: .4; cursor: default; }
+  .dv-page-ind { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; }
+  .dv-msg { padding: 26px 10px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* ---------- Week 2: upload + ingest result card ---------- */
+  .clip {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 13px;
+    border: 1px solid var(--hair-strong); background: var(--card-2); color: var(--muted);
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    transition: color .15s, border-color .15s;
+  }
+  .clip:hover { color: var(--accent); border-color: var(--accent-line); }
+  .clip:disabled { opacity: .45; cursor: default; }
+  .clip svg { width: 19px; height: 19px; }
+  .attach-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+    padding: 9px 12px; border: 1px solid var(--accent-line); background: var(--accent-soft);
+    border-radius: var(--radius-sm); font-size: 13px;
+  }
+  .attach-name { font-weight: 650; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attach-size { color: var(--muted); font-size: 12px; }
+  .doct-seg { display: inline-flex; padding: 2px; gap: 2px; background: var(--card); border: 1px solid var(--hair); border-radius: 999px; }
+  .doct-seg button { font: inherit; font-size: 12px; font-weight: 650; border: none; background: transparent; color: var(--muted); padding: 5px 11px; border-radius: 999px; cursor: pointer; }
+  .doct-seg button.on { background: var(--accent); color: #fff; }
+  .attach-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .attach-go { font: inherit; font-size: 12.5px; font-weight: 700; border: none; border-radius: 9px; padding: 7px 14px; background: var(--accent); color: #fff; cursor: pointer; }
+  .attach-go:hover { background: var(--accent-hover); }
+  .attach-x { border: none; background: transparent; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 8px; }
+  .attach-x:hover { background: var(--card-2); color: var(--text); }
+  .attach-x svg { width: 15px; height: 15px; display: block; }
+
+  .ing-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+  .ing-head.good { color: var(--good-ink); }
+  .ing-head.warn { color: var(--warn-ink); }
+  .ing-head.crit { color: var(--crit-ink); }
+  .ing-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .ing-sec { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin: 10px 0 4px; }
+  .gap-line { font-size: 12.5px; color: var(--warn-ink); background: var(--warn-soft); border: 1px solid var(--warn-line); border-radius: 8px; padding: 6px 10px; margin-top: 5px; line-height: 1.45; }
+  .nr-box { margin-top: 8px; padding: 9px 11px; border-radius: var(--radius-sm); background: var(--info-soft); border: 1px solid var(--info-line); color: var(--info-ink); font-size: 12.5px; line-height: 1.5; }
+  .nr-box .nr-fields { margin-top: 5px; color: var(--muted); font-size: 12px; }
+  .dedup-box { margin-top: 6px; padding: 9px 11px; border-radius: var(--radius-sm); background: var(--card-2); border: 1px dashed var(--hair-strong); color: var(--muted); font-size: 13px; font-weight: 600; }
+
+  /* ---------- Composer ---------- */
+  .composer-wrap { flex: 0 0 auto; border-top: 1px solid var(--hair); background: var(--card); padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
+  .starters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .composer { display: flex; gap: 9px; align-items: flex-end; }
+  .composer textarea {
+    flex: 1 1 auto; resize: none; font: inherit; font-size: 14.5px;
+    padding: 11px 14px; border: 1px solid var(--hair-strong);
+    border-radius: 13px; background: var(--card-2); color: var(--text);
+    max-height: 140px; line-height: 1.45;
+  }
+  .composer textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .send {
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 13px; border: none;
+    background: var(--accent); color: #fff; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .15s, transform .06s;
+  }
+  .send:hover { background: var(--accent-hover); }
+  .send:active { transform: translateY(1px); }
+  .send:disabled { opacity: .45; cursor: default; }
+  .send svg { width: 19px; height: 19px; }
+  .hint { font-size: 11px; color: var(--faint); margin-top: 7px; text-align: center; }
+
+  /* ---------- My Day ---------- */
+  .day-bar { flex: 0 0 auto; padding: 16px 18px; border-bottom: 1px solid var(--hair); background: var(--card); }
+  .day-date { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+  .day-sub { display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
+  .day-sub .count { font-size: 13px; color: var(--muted); font-weight: 550; }
+  .day-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 14px 16px; }
+  .appt {
+    width: 100%; text-align: left; border: 1px solid var(--hair); background: var(--card);
+    border-radius: 12px; box-shadow: var(--shadow); margin-bottom: 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 14px; padding: 13px 14px;
+    transition: box-shadow .16s, transform .06s, border-color .16s; font: inherit; color: var(--text);
+  }
+  .appt:hover { box-shadow: var(--shadow-lift); }
+  .appt:active { transform: translateY(1px); }
+  .appt.flagged { border-color: var(--crit-line); }
+  .appt.flagged.warn-only { border-color: var(--warn-line); }
+  .appt .time { flex: 0 0 auto; width: 62px; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .appt .who { flex: 1 1 auto; min-width: 0; }
+  .appt .who .nm { font-size: 15px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .appt .who .rs { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .appt .right { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; }
+  .flagdot { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+  .flagdot.crit { background: var(--crit-soft); color: var(--crit-ink); }
+  .flagdot.warn { background: var(--warn-soft); color: var(--warn-ink); }
+  .flagdot .d { width: 7px; height: 7px; border-radius: 50%; }
+  .flagdot.crit .d { background: var(--crit); }
+  .flagdot.warn .d { background: var(--warn); }
+  .changed { font-size: 10.5px; font-weight: 700; color: var(--sky); background: var(--info-soft); border: 1px solid var(--info-line); padding: 3px 8px; border-radius: 999px; }
+
+  /* ---------- states ---------- */
+  .state { text-align: center; color: var(--muted); padding: 48px 24px; }
+  .state .big { color: var(--faint); margin-bottom: 12px; }
+  .state .big svg { width: 40px; height: 40px; }
+  .state h3 { font-size: 16px; color: var(--text); margin: 0 0 6px; font-weight: 650; }
+  .state p { margin: 0; font-size: 13.5px; }
+  .inline-err { margin: 10px 0; padding: 11px 13px; border-radius: var(--radius-sm); background: var(--crit-soft); border: 1px solid var(--crit-line); color: var(--crit-ink); font-size: 13.5px; font-weight: 550; }
+
+  /* skeleton */
+  .sk { position: relative; overflow: hidden; background: var(--card-2); border-radius: 6px; }
+  .sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--card) 60%, transparent), transparent);
+    animation: shimmer 1.3s infinite; }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  .sk-line { height: 11px; margin: 8px 0; }
+
+  @media (max-width: 560px) {
+    .topbar { flex-wrap: wrap; }
+    .seg { margin-left: 0; width: 100%; justify-content: center; }
+    .brand { order: 0; }
+    .patient-bar { flex-wrap: wrap; }
+    .pid-switch { margin-left: 0; }
+    .bubble { max-width: 92%; }
+    .turn.assistant .bubble { max-width: 100%; }
+    .metric-lg-grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg>
+        </span>
+        <div>
+          <div class="name">Clinical Co-Pilot</div>
+          <div class="sub">read-only · source-attributed</div>
+        </div>
+      </div>
+      <div class="seg" role="tablist" aria-label="View">
+        <button id="tab-patient" role="tab" aria-selected="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+          This Patient
+        </button>
+        <button id="tab-day" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          My Day
+        </button>
+      </div>
+      <a id="ops-link" class="minbtn" href="/dashboard" target="_blank" rel="noopener" title="System dashboard (PHI-free ops metrics)" aria-label="Open the system dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+      </a>
+      <button id="min-btn" class="minbtn" type="button" title="Minimize" aria-label="Minimize Co-Pilot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>
+      </button>
+    </div>
+
+    <!-- THIS PATIENT -->
+    <section class="view active" id="view-patient" role="tabpanel" aria-labelledby="tab-patient">
+      <div class="patient-bar" id="patient-bar"></div>
+      <div class="pt-scroll">
+        <div class="dashboard" id="dashboard"></div>
+        <div class="conv-label">Conversation</div>
+        <div class="transcript" id="transcript" aria-live="polite"></div>
+      </div>
+      <div class="composer-wrap">
+        <div class="attach-bar" id="attach-bar" style="display:none"></div>
+        <div class="starters" id="starters"></div>
+        <form class="composer" id="composer">
+          <button type="button" class="clip" id="clip" title="Attach a document (PDF, PNG or JPG)" aria-label="Attach a document">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <input type="file" id="file-input" accept="application/pdf,image/png,image/jpeg" style="display:none" aria-hidden="true" tabindex="-1" />
+          <textarea id="input" rows="1" placeholder="Ask about this patient…" autocomplete="off" aria-label="Message"></textarea>
+          <button type="submit" class="send" id="send" title="Send" aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z" fill="currentColor" stroke="none"/></svg>
+          </button>
+        </form>
+        <div class="hint">Enter to send · Shift+Enter for newline · Co-Pilot surfaces context only; OpenEMR remains the system of record.</div>
+      </div>
+    </section>
+
+    <!-- MY DAY -->
+    <section class="view" id="view-day" role="tabpanel" aria-labelledby="tab-day">
+      <div class="day-bar" id="day-bar"></div>
+      <div class="day-scroll" id="day-scroll"></div>
+    </section>
+  </div>
+
+  <!-- Week 2: document viewer (bbox overlay, D7) -->
+  <div class="dv-backdrop" id="dv-backdrop" role="dialog" aria-modal="true" aria-label="Document viewer">
+    <div class="dv-panel">
+      <div class="dv-top">
+        <div class="dv-title" id="dv-title">Document</div>
+        <button class="dv-close" id="dv-close" type="button" title="Close" aria-label="Close document viewer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="dv-legend">
+        <span class="k"><span class="sw"></span> verified against document text</span>
+        <span class="k"><span class="sw approx"></span> approximate (model-estimated)</span>
+      </div>
+      <div class="dv-body" id="dv-body"></div>
+      <div class="dv-nav">
+        <button id="dv-prev" type="button">‹ Prev</button>
+        <button id="dv-next" type="button">Next ›</button>
+        <span class="dv-page-ind" id="dv-ind"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Week 2: guideline evidence popover -->
+  <div class="gl-pop" id="gl-pop" style="display:none" role="tooltip"></div>
+
+  <!-- Floating launcher (overlay embed mode only) -->
+  <button id="launcher" type="button" title="Open Clinical Co-Pilot" aria-label="Open Clinical Co-Pilot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg>
+    <span id="launch-badge" aria-hidden="true"></span>
+  </button>
+
+<script>
+(function () {
+  "use strict";
+
+  // Session token (AUTH_TOKEN_SPEC.md): OpenEMR appends it to the iframe URL
+  // fragment (#t=<token>); the fragment never reaches the server, so the token
+  // stays out of access logs. No token is baked into this page anymore.
+  let TOKEN = "";
+  let DAY_TOKEN = "";   // scope="day" token for /day (the schedule spans patients)
+  function readHashParam(name) {
+    const h = (location.hash || "").replace(/^#/, "");
+    const fromHash = new URLSearchParams(h).get(name);
+    if (fromHash) return fromHash;
+    return new URLSearchParams(location.search).get(name) || "";
+  }
+  function wireOpsLink() {
+    // The ops dashboard reads its token from the URL fragment (#t=...), same
+    // discipline as this panel: the fragment never reaches server logs. Any
+    // valid session token works — /metrics/summary is PHI-free counters only.
+    const a = document.getElementById("ops-link");
+    if (a && TOKEN) a.href = "/dashboard#t=" + encodeURIComponent(TOKEN);
+  }
+  async function resolveToken() {
+    TOKEN = readHashParam("t");
+    DAY_TOKEN = readHashParam("d");   // OpenEMR overlay mints both (#t=..&d=..)
+    if (TOKEN) { wireOpsLink(); return true; }
+    // Local dev convenience: the sidecar mints a token only when
+    // COPILOT_AUTH_DEV_MODE=true (404 otherwise). Never available in prod.
+    const view = new URLSearchParams(location.search).get("view");
+    const scope = view === "day" ? "day" : "patient";
+    try {
+      const r = await fetch("/dev/token?scope=" + scope);
+      if (r.ok) { TOKEN = (await r.json()).token || ""; }
+      // A patient overlay also needs a day token for the My Day tab.
+      if (TOKEN && scope === "patient") {
+        const rd = await fetch("/dev/token?scope=day");
+        if (rd.ok) { DAY_TOKEN = (await rd.json()).token || ""; }
+      }
+      wireOpsLink();
+      return !!TOKEN;
+    } catch (e) { /* fall through to unauthorized */ }
+    return false;
+  }
+  const EMBED_PID_RAW = "__COPILOT_PID__";
+  const DEFAULT_PID_RAW = "__COPILOT_DEFAULT_PID__";
+  const MAX_HISTORY = 12;
+
+  // ---- embed mode ----
+  // "overlay" = floating helper inside the chart (bubble -> panel).
+  // "emr"     = the in-EMR My Day page; patient clicks hand off to the chart.
+  const EMBED_MODE = new URLSearchParams(location.search).get("embed") || "";
+  const OVERLAY = EMBED_MODE === "overlay";
+  const EMR_HANDOFF = EMBED_MODE === "emr";
+
+  // ---- pid + embed resolution ----
+  function toPosInt(v) { const n = parseInt(v, 10); return Number.isFinite(n) && n > 0 ? n : null; }
+  const embedPid = toPosInt(EMBED_PID_RAW);
+  const urlPid = toPosInt(new URLSearchParams(location.search).get("pid"));
+  const LOCKED = !!(embedPid || urlPid);           // embed mode => hide manual input
+  // Server-injected default (a seeded showcase patient) — never a bare "1",
+  // which may not exist and made the standalone panel look broken.
+  let currentPid = embedPid || urlPid || toPosInt(DEFAULT_PID_RAW) || 101;
+
+  // Client-local calendar date (the physician's day, not the server's UTC day).
+  function localISODate() {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  // ---- DOM ----
+  const $ = (id) => document.getElementById(id);
+  const dash = $("dashboard");
+  const ptBar = $("patient-bar");
+  const transcript = $("transcript");
+  const starters = $("starters");
+  const composer = $("composer");
+  const input = $("input");
+  const send = $("send");
+  const dayBar = $("day-bar");
+  const dayScroll = $("day-scroll");
+
+  let history = [];      // [{role,text}]
+  let busy = false;
+  let snapshot = null;   // last SnapshotResponse
+  let dayLoaded = false;
+
+  // ---- element helper ----
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function frag() { return document.createDocumentFragment(); }
+  function svgIcon(path, sw) {
+    const s = 'stroke-width="' + (sw || 2) + '"';
+    const span = document.createElement("span");
+    span.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' + s + ' stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+    return span.firstChild;
+  }
+  const ICONS = {
+    alert: '<path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
+    problem: '<path d="M8 2v4M16 2v4M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 14l2 2 4-4"/>',
+    med: '<path d="m10.5 20.5-7-7a4.95 4.95 0 0 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"/><path d="m8.5 8.5 7 7"/>',
+    allergy: '<path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 8v4M12 16h.01"/>',
+    lab: '<path d="M9 3h6M10 3v6l-4.5 8A2 2 0 0 0 7.3 20h9.4a2 2 0 0 0 1.8-3L14 9V3"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    chevron: '<path d="m9 18 6-6-6-6"/>',
+    chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'
+  };
+
+  function scrollTranscript() {
+    const c = document.querySelector(".pt-scroll");
+    requestAnimationFrame(() => { c.scrollTop = c.scrollHeight; });
+  }
+
+  // ---- citations (Week 2: AnySourceRef union — switch on source_type) ----
+  // patient_record -> table#pk pill (Week 1 unchanged)
+  // document       -> doc + page pill; click opens the bbox overlay viewer
+  // guideline      -> guideline pill; click opens the evidence popover
+  function makeCite(ref) {
+    if (!ref) return null;
+    const st = ref.source_type ||
+      (ref.table ? "patient_record" : (ref.document_id != null ? "document" : (ref.chunk_id ? "guideline" : null)));
+    if (st === "document") return makeDocCite(ref);
+    if (st === "guideline") return makeGlCite(ref);
+    const c = el("span", "cite");
+    const code = el("code");
+    const pk = (ref.primary_key !== undefined && ref.primary_key !== null) ? ("#" + ref.primary_key) : "";
+    code.textContent = (ref.table || "?") + pk;
+    c.appendChild(code);
+    if (ref.label) { const l = el("span", "lbl"); l.textContent = ref.label; c.appendChild(l); }
+    return c;
+  }
+  function makeDocCite(ref) {
+    const c = el("span", "cite cite-doc click");
+    c.setAttribute("role", "button");
+    c.tabIndex = 0;
+    const code = el("code");
+    code.textContent = "doc#" + ref.document_id + (ref.page ? " p." + ref.page : "");
+    c.appendChild(code);
+    if (ref.label) { const l = el("span", "lbl"); l.textContent = ref.label; c.appendChild(l); }
+    c.title = (ref.quote ? "“" + ref.quote + "” — " : "") + "click to view on the document";
+    const open = () => openDocViewer(ref);
+    c.addEventListener("click", open);
+    c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    return c;
+  }
+  function makeGlCite(ref) {
+    const c = el("span", "cite cite-gl click");
+    c.setAttribute("role", "button");
+    c.tabIndex = 0;
+    const code = el("code");
+    code.textContent = "guideline";
+    c.appendChild(code);
+    const l = el("span", "lbl");
+    l.textContent = ref.label || ref.section || ref.doc_id || ref.chunk_id;
+    c.appendChild(l);
+    c.title = "Reference knowledge — click for the evidence";
+    const open = (e) => { e.stopPropagation(); openGlPopover(ref, c); };
+    c.addEventListener("click", open);
+    c.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGlPopover(ref, c); } });
+    return c;
+  }
+
+  // Guideline metadata registry: filled from the chat response's
+  // guideline_evidence / briefing claims (no extra endpoint). chunk_id -> meta.
+  const GL_META = {};
+  function registerGlMeta(claims) {
+    (claims || []).forEach(cl => {
+      (cl.source_refs || []).forEach(r => {
+        const st = r.source_type || (r.chunk_id && !r.table ? "guideline" : null);
+        if (st !== "guideline" || !r.chunk_id) return;
+        const prev = GL_META[r.chunk_id] || {};
+        GL_META[r.chunk_id] = {
+          label: r.label || prev.label,
+          section: r.section || prev.section,
+          doc_id: r.doc_id || prev.doc_id,
+          claim_text: cl.text || prev.claim_text,
+          // Present when the server ships them on the ref/claim; render if so.
+          quote: r.quote || prev.quote,
+          source_org: r.source_org || prev.source_org,
+          source_url: r.source_url || prev.source_url
+        };
+      });
+    });
+  }
+
+  // ---- guideline evidence popover ----
+  const glPop = $("gl-pop");
+  function closeGlPopover() { glPop.style.display = "none"; }
+  function openGlPopover(ref, anchor) {
+    const meta = (ref.chunk_id && GL_META[ref.chunk_id]) || {};
+    glPop.innerHTML = "";
+    glPop.appendChild(el("div", "gp-title", ref.label || meta.label || "Guideline"));
+    const secBits = [];
+    if (ref.section || meta.section) secBits.push(ref.section || meta.section);
+    if (ref.chunk_id) secBits.push(ref.chunk_id);
+    if (secBits.length) glPop.appendChild(el("div", "gp-sec", secBits.join(" · ")));
+    const quote = meta.quote || ref.quote || meta.claim_text;
+    if (quote) glPop.appendChild(el("blockquote", "gp-quote", "“" + quote + "”"));
+    const org = meta.source_org || ref.source_org;
+    const url = meta.source_url || ref.source_url;
+    if (org || url) {
+      const src = el("div", "gp-src");
+      if (org) src.appendChild(el("span", null, org));
+      if (url) {
+        const a = el("a", null, url.replace(/^https?:\/\//, ""));
+        a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+        src.appendChild(a);
+      }
+      glPop.appendChild(src);
+    }
+    glPop.appendChild(el("div", "gp-note",
+      "Reference knowledge from the office protocol corpus — not this patient's chart."));
+    // position near the anchor, clamped to the viewport
+    glPop.style.display = "block";
+    const r = anchor.getBoundingClientRect();
+    const pw = glPop.offsetWidth, ph = glPop.offsetHeight;
+    let left = Math.min(Math.max(8, r.left), window.innerWidth - pw - 8);
+    let top = r.bottom + 6;
+    if (top + ph > window.innerHeight - 8) top = Math.max(8, r.top - ph - 6);
+    glPop.style.left = left + "px";
+    glPop.style.top = top + "px";
+  }
+  document.addEventListener("click", (e) => {
+    if (glPop.style.display !== "none" && !glPop.contains(e.target)) closeGlPopover();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { closeGlPopover(); closeDocViewer(); } });
+
+  // ---- document viewer (bbox overlay; server-rendered pages, §5.3) ----
+  const dvBackdrop = $("dv-backdrop"), dvBody = $("dv-body"), dvTitle = $("dv-title"),
+        dvInd = $("dv-ind"), dvPrev = $("dv-prev"), dvNext = $("dv-next"), dvClose = $("dv-close");
+  const dv = { docId: null, pid: null, page: 1, pageCount: 1, refs: [], focus: null, blobs: {}, token: 0 };
+
+  function closeDocViewer() {
+    if (!dvBackdrop.classList.contains("open")) return;
+    dvBackdrop.classList.remove("open");
+    Object.keys(dv.blobs).forEach(k => { try { URL.revokeObjectURL(dv.blobs[k]); } catch (e) {} });
+    dv.blobs = {};
+    dv.token++; // invalidate in-flight loads
+  }
+  dvClose.addEventListener("click", closeDocViewer);
+  dvBackdrop.addEventListener("click", (e) => { if (e.target === dvBackdrop) closeDocViewer(); });
+  dvPrev.addEventListener("click", () => { if (dv.page > 1) { dv.page--; renderDvPage(); } });
+  dvNext.addEventListener("click", () => { if (dv.page < dv.pageCount) { dv.page++; renderDvPage(); } });
+
+  function refBoxPage(r) { return (r && r.bbox && r.bbox.page) || (r && r.page) || null; }
+  function sameRef(a, b) {
+    return !!(a && b && a.document_id === b.document_id &&
+      (a.field_id || "") === (b.field_id || "") && (a.page || null) === (b.page || null));
+  }
+
+  async function openDocViewer(ref) {
+    dv.docId = ref.document_id;
+    dv.pid = currentPid;
+    dv.focus = ref;
+    dv.page = refBoxPage(ref) || 1;
+    dv.pageCount = 1;
+    dv.refs = [ref];
+    dvTitle.textContent = ref.label || ("Document #" + ref.document_id);
+    dvBody.innerHTML = "";
+    dvBody.appendChild(el("div", "dv-msg", "Loading document…"));
+    dvInd.textContent = "";
+    dvPrev.disabled = dvNext.disabled = true;
+    dvBackdrop.classList.add("open");
+
+    const token = ++dv.token;
+    const q = "?pid=" + encodeURIComponent(dv.pid);
+    try {
+      const [metaRes, citRes] = await Promise.all([
+        fetch("/documents/" + dv.docId + "/meta" + q, { headers: authHeaders(false) }),
+        fetch("/documents/" + dv.docId + "/citations" + q, { headers: authHeaders(false) })
+      ]);
+      if (token !== dv.token) return; // viewer closed/reopened meanwhile
+      if (!metaRes.ok) {
+        dvBody.innerHTML = "";
+        dvBody.appendChild(el("div", "dv-msg",
+          metaRes.status === 404 ? "This document is not available (not found for this patient, or ingestion is disabled)."
+          : metaRes.status === 403 ? "Not authorized to view this document (403)."
+          : humanError(metaRes.status)));
+        return;
+      }
+      const meta = await metaRes.json();
+      dv.pageCount = meta.page_count || 0;
+      if (citRes.ok) {
+        try {
+          const cits = await citRes.json();
+          if (Array.isArray(cits) && cits.length) {
+            dv.refs = cits.slice();
+            if (!dv.refs.some(r => sameRef(r, ref))) dv.refs.push(ref);
+          }
+        } catch (e) { /* citations are an enhancement, never fatal */ }
+      }
+      if (!dv.pageCount) {
+        dvBody.innerHTML = "";
+        dvBody.appendChild(el("div", "dv-msg",
+          "No page preview is available for this file type. The citation still binds to document #" + dv.docId + "."));
+        return;
+      }
+      dv.page = Math.min(Math.max(1, dv.page), dv.pageCount);
+      renderDvPage();
+    } catch (e) {
+      if (token !== dv.token) return;
+      dvBody.innerHTML = "";
+      dvBody.appendChild(el("div", "dv-msg", "Could not load the document. Check your connection and try again."));
+    }
+  }
+
+  async function renderDvPage() {
+    const token = ++dv.token;
+    dvInd.textContent = "page " + dv.page + " / " + dv.pageCount;
+    dvPrev.disabled = dv.page <= 1;
+    dvNext.disabled = dv.page >= dv.pageCount;
+    dvBody.innerHTML = "";
+
+    // page-level banner when the focused citation has no exact region
+    const focusOnThisDoc = dv.focus && dv.focus.document_id === dv.docId;
+    if (focusOnThisDoc && !dv.focus.bbox) {
+      dvBody.appendChild(el("div", "dv-banner",
+        dv.focus.page
+          ? "No exact region is recorded for this citation — showing page " + (refBoxPage(dv.focus) || dv.page) + "."
+          : "This citation has no recorded location on the document."));
+    }
+    dvBody.appendChild(el("div", "dv-msg", "Rendering page…"));
+
+    const key = dv.docId + ":" + dv.page;
+    let url = dv.blobs[key];
+    if (!url) {
+      try {
+        const res = await fetch(
+          "/documents/" + dv.docId + "/page/" + dv.page + ".png?pid=" + encodeURIComponent(dv.pid),
+          { headers: authHeaders(false) });
+        if (token !== dv.token) return;
+        if (!res.ok) {
+          dvBody.querySelector(".dv-msg").textContent =
+            res.status === 415 ? "No page preview is available for this file type."
+            : "Could not render this page (" + res.status + ").";
+          return;
+        }
+        url = URL.createObjectURL(await res.blob());
+        dv.blobs[key] = url;
+      } catch (e) {
+        if (token !== dv.token) return;
+        dvBody.querySelector(".dv-msg").textContent = "Could not render this page. Check your connection.";
+        return;
+      }
+    }
+    if (token !== dv.token) return;
+
+    const msg = dvBody.querySelector(".dv-msg");
+    if (msg) msg.remove();
+    const stage = el("div", "dv-stage");
+    const img = el("img");
+    img.alt = "Document #" + dv.docId + " page " + dv.page;
+    img.src = url;
+    stage.appendChild(img);
+
+    // percentage-positioned bbox overlays: solid = text_layer, dashed = vlm
+    dv.refs.forEach(r => {
+      if (!r || !r.bbox || refBoxPage(r) !== dv.page) return;
+      const b = r.bbox;
+      const box = el("div", "dv-box" + (b.origin === "vlm" ? " approx" : "") +
+        (focusOnThisDoc && sameRef(r, dv.focus) ? " hl" : ""));
+      box.style.left = (b.x0 * 100) + "%";
+      box.style.top = (b.y0 * 100) + "%";
+      box.style.width = (Math.max(0, b.x1 - b.x0) * 100) + "%";
+      box.style.height = (Math.max(0, b.y1 - b.y0) * 100) + "%";
+      box.title = (r.label || r.field_id || "") + (r.quote ? " — “" + r.quote + "”" : "");
+      if (b.origin === "vlm") box.appendChild(el("span", "tag", "approximate"));
+      stage.appendChild(box);
+    });
+    dvBody.appendChild(stage);
+  }
+  function makeCites(refs, parentTitle) {
+    if (!refs || !refs.length) return null;
+    const w = el("div", "cites");
+    refs.forEach(r => { const c = makeCite(r); if (c) w.appendChild(c); });
+    return w;
+  }
+  // one small chip for a single .source
+  function sourceChip(source) {
+    const c = makeCite(source);
+    if (c && source && source.label) {
+      c.title = (source.table || "") + "#" + source.primary_key + " · " + source.label;
+    }
+    return c;
+  }
+
+  // ================= SPARKLINE =================
+  function numify(v) {
+    if (v == null) return NaN;
+    const m = String(v).match(/-?\d+(\.\d+)?/);
+    return m ? parseFloat(m[0]) : NaN;
+  }
+  function sparkline(series) {
+    const pts = series.map(p => ({ v: numify(p.value), ab: !!p.abnormal }))
+                      .filter(p => isFinite(p.v));
+    if (pts.length < 2) return null;
+    const W = 78, H = 24, pad = 3;
+    const vals = pts.map(p => p.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const span = (max - min) || 1;
+    const x = i => pad + i * (W - 2 * pad) / (pts.length - 1);
+    const y = v => H - pad - (v - min) / span * (H - 2 * pad);
+    let poly = "";
+    pts.forEach((p, i) => { poly += (i ? " " : "") + x(i).toFixed(1) + "," + y(p.v).toFixed(1); });
+    let dots = "";
+    pts.forEach((p, i) => {
+      const last = i === pts.length - 1;
+      if (!p.ab && !last) return;
+      const col = p.ab ? "var(--crit)" : "var(--accent)";
+      dots += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.v).toFixed(1) + '" r="' + (last ? 2.6 : 2) + '" fill="' + col + '"/>';
+    });
+    const wrap = el("span", "spark");
+    wrap.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true">' +
+      '<polyline points="' + poly + '" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>' +
+      dots + '</svg>';
+    return wrap;
+  }
+
+  // T5: full-size trend chart for the lab_trend chip card. Same hand-rolled
+  // inline-SVG approach as sparkline() — no chart library, themed via the
+  // existing CSS custom properties. `points` are LabResult-shaped
+  // ({value, date, abnormal}) already sorted ASC by the /labs/trend endpoint.
+  function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function trendChart(points) {
+    const pts = (points || [])
+      .map(p => ({ v: numify(p.value), ab: !!p.abnormal, date: p.date || "" }))
+      .filter(p => isFinite(p.v));
+    if (pts.length < 2) return null;
+    const W = 300, H = 120, padL = 36, padR = 12, padT = 16, padB = 18;
+    const vals = pts.map(p => p.v);
+    const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    const span = (max - min) || 1;
+    const x = i => padL + i * (W - padL - padR) / (pts.length - 1);
+    const y = v => padT + (H - padT - padB) * (1 - (v - min) / span);
+    const fmt = v => (Math.abs(v) >= 100 || v === Math.round(v)) ? String(Math.round(v)) : String(Math.round(v * 10) / 10);
+    let poly = "";
+    pts.forEach((p, i) => { poly += (i ? " " : "") + x(i).toFixed(1) + "," + y(p.v).toFixed(1); });
+    let dots = "";
+    pts.forEach((p, i) => {
+      const last = i === pts.length - 1;
+      const col = p.ab ? "var(--crit)" : "var(--accent)";
+      dots += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(p.v).toFixed(1) + '" r="' + (last ? 3.4 : 2.6) + '" fill="' + col + '"/>';
+    });
+    const last = pts[pts.length - 1];
+    // Latest-value label: sits above its dot, clamped inside the frame.
+    const lvX = Math.min(x(pts.length - 1), W - padR).toFixed(1);
+    const lvY = Math.max(y(last.v) - 8, 10).toFixed(1);
+    const txt = 'font-family="inherit" font-size="9.5"';
+    const svg =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="trend chart">' +
+      '<line x1="' + padL + '" y1="' + y(max).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y(max).toFixed(1) + '" stroke="var(--hair)" stroke-width="1"/>' +
+      '<line x1="' + padL + '" y1="' + y(min).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y(min).toFixed(1) + '" stroke="var(--hair)" stroke-width="1"/>' +
+      '<text x="' + (padL - 5) + '" y="' + (y(max) + 3).toFixed(1) + '" text-anchor="end" ' + txt + ' fill="var(--muted)">' + fmt(max) + '</text>' +
+      '<text x="' + (padL - 5) + '" y="' + (y(min) + 3).toFixed(1) + '" text-anchor="end" ' + txt + ' fill="var(--muted)">' + fmt(min) + '</text>' +
+      '<polyline points="' + poly + '" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      dots +
+      '<text x="' + lvX + '" y="' + lvY + '" text-anchor="end" ' + txt + ' font-weight="700" fill="' + (last.ab ? "var(--crit)" : "var(--text)") + '">' + fmt(last.v) + '</text>' +
+      '<text x="' + padL + '" y="' + (H - 5) + '" ' + txt + ' fill="var(--faint)">' + esc(pts[0].date) + '</text>' +
+      '<text x="' + (W - padR) + '" y="' + (H - 5) + '" text-anchor="end" ' + txt + ' fill="var(--faint)">' + esc(last.date) + '</text>' +
+      '</svg>';
+    const wrap = el("div", "trend-chart");
+    wrap.innerHTML = svg;
+    return wrap;
+  }
+
+  // ================= DASHBOARD CARD BUILDERS =================
+  const STATUS_COLOR = { normal: "--good", elevated: "--warn", high: "--crit", low: "--warn" };
+  const STATUS_INK   = { normal: "--good-ink", elevated: "--warn-ink", high: "--crit-ink", low: "--warn-ink" };
+
+  function sevRank(s) { return s === "critical" ? 3 : s === "warning" ? 2 : 1; }
+  function chevSpan(cls) {
+    const c = el("span", cls);
+    c.appendChild(svgIcon(ICONS.chevron, 2.2));
+    return c;
+  }
+  function toggleCard(card, head) {
+    head.addEventListener("click", () => {
+      const open = card.classList.toggle("open");
+      head.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+
+  // ---- Alerts ----
+  function metricStatusLabelForName(name, metrics) {
+    const n = (name || "").toLowerCase();
+    for (const m of metrics) {
+      if (m.key && n.indexOf(m.key.toLowerCase()) !== -1 && m.status_label) return m.status_label;
+    }
+    return null;
+  }
+  function metricStatusLabelByKey(key, metrics) {
+    for (const m of metrics) if (m.key === key) return m.status_label;
+    return null;
+  }
+  function deriveAlertTitle(f, metrics) {
+    const msg = f.message || "";
+    if (f.kind === "allergy_interaction") return "Allergy Conflict";
+    if (f.kind === "drug_drug") return "Drug Interaction";
+    let m;
+    if ((m = msg.match(/^Abnormal lab:\s*(.+?)\s*=/i))) {
+      const nm = m[1].trim();
+      return nm + " — " + (metricStatusLabelForName(nm, metrics) || "Abnormal");
+    }
+    if ((m = msg.match(/^Rising trend in\s*(.+?)\s*:/i))) {
+      return m[1].trim() + " — Rising";
+    }
+    if (/blood pressure/i.test(msg)) {
+      return "Blood Pressure — " + (metricStatusLabelByKey("bp", metrics) || "High");
+    }
+    if (/heart rate/i.test(msg)) {
+      return "Heart Rate — " + (metricStatusLabelByKey("hr", metrics) || "Abnormal");
+    }
+    return (f.kind || "alert").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  function buildAlertCard(f, metrics) {
+    const sev = f.severity === "critical" ? "crit" : "warn";
+    const card = el("div", "alert-card " + sev);
+    const head = el("button", "alert-head");
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    head.appendChild(el("span", "alert-dot"));
+    const body = el("div", "alert-body");
+    const trow = el("div", "alert-titlerow");
+    trow.appendChild(el("span", "alert-title", deriveAlertTitle(f, metrics)));
+    const side = el("div", "alert-side");
+    side.appendChild(el("span", "alert-sev", f.severity === "critical" ? "Critical" : "Warning"));
+    side.appendChild(chevSpan("alert-chev"));
+    trow.appendChild(side);
+    body.appendChild(trow);
+    body.appendChild(el("div", "alert-desc", f.message || ""));
+    head.appendChild(body);
+    card.appendChild(head);
+
+    const cites = makeCites(f.source_refs);
+    if (cites) {
+      const wrap = el("div", "alert-cites");
+      const inner = el("div", "inner");
+      inner.appendChild(cites);
+      wrap.appendChild(inner);
+      card.appendChild(wrap);
+    }
+    toggleCard(card, head);
+    return card;
+  }
+  function calmAlertCard() {
+    const card = el("div", "alert-card good calm");
+    const head = el("div", "alert-head");
+    head.appendChild(el("span", "alert-dot"));
+    const body = el("div", "alert-body");
+    const trow = el("div", "alert-titlerow");
+    trow.appendChild(el("span", "alert-title", "✓ Nothing needs review today"));
+    body.appendChild(trow);
+    body.appendChild(el("div", "alert-desc", "No safety flags, interactions, or out-of-range results for this patient."));
+    head.appendChild(body);
+    card.appendChild(head);
+    return card;
+  }
+
+  // ---- Metric cards ----
+  function metricSpark(metric) {
+    const hist = Array.isArray(metric.history) ? metric.history : [];
+    if (hist.length < 2) return null;
+    const abnormal = metric.status && metric.status !== "normal";
+    const series = hist.map((p, i) => ({ value: p.value, abnormal: abnormal && i === hist.length - 1 }));
+    return sparkline(series);
+  }
+  function metricDetail(metric) {
+    const inner = el("div");
+    const sp = metricSpark(metric);
+    if (sp) { const w = el("div", "m-spark"); w.appendChild(sp); inner.appendChild(w); }
+    const hist = Array.isArray(metric.history) ? metric.history : [];
+    const abnormal = metric.status && metric.status !== "normal";
+    hist.slice().reverse().forEach((p, idx) => {
+      const r = el("div", "hist-row");
+      r.appendChild(el("span", null, p.date || "—"));
+      const hv = el("span", "hv" + (abnormal && idx === 0 ? " ab" : ""));
+      hv.textContent = p.value + (metric.unit ? " " + metric.unit : "");
+      r.appendChild(hv);
+      inner.appendChild(r);
+    });
+    const c = sourceChip(metric.source);
+    if (c) { const cc = el("div", "cites m-cite"); cc.appendChild(c); inner.appendChild(cc); }
+    return inner;
+  }
+  function buildMetricCard(metric, large) {
+    const st = metric.status || "normal";
+    const card = el("div", "metric-card st-" + st + " " + (large ? "lg" : "tile"));
+    const head = el("button", "metric-head");
+    head.type = "button";
+    head.setAttribute("aria-expanded", "false");
+    const valColor = "var(" + (STATUS_COLOR[st] || "--good") + ")";
+    const inkColor = "var(" + (STATUS_INK[st] || "--good-ink") + ")";
+
+    if (large) {
+      const top = el("div", "m-top");
+      top.appendChild(el("span", "m-label", metric.label || metric.key));
+      top.appendChild(chevSpan("m-chev"));
+      head.appendChild(top);
+      const vrow = el("div", "m-valrow");
+      const v = el("span", "m-value", metric.value != null ? String(metric.value) : "—");
+      v.style.color = valColor;
+      vrow.appendChild(v);
+      if (metric.unit) vrow.appendChild(el("span", "m-unit", metric.unit));
+      head.appendChild(vrow);
+      const sub = el("div", "m-sub");
+      if (metric.status_label) {
+        const sw = el("span", "m-statusword", metric.status_label);
+        sw.style.color = inkColor;
+        sub.appendChild(sw);
+      }
+      sub.appendChild(el("span", "m-latest", "latest"));
+      head.appendChild(sub);
+    } else {
+      const top = el("div", "t-top");
+      top.appendChild(el("span", "t-label", metric.label || metric.key));
+      top.appendChild(chevSpan("m-chev"));
+      head.appendChild(top);
+      const v = el("div", "t-value");
+      const vn = el("span", null, metric.value != null ? String(metric.value) : "—");
+      vn.style.color = valColor;
+      v.appendChild(vn);
+      if (metric.unit) v.appendChild(el("span", "t-unit", metric.unit));
+      head.appendChild(v);
+      if (metric.status_label) {
+        const sw = el("div", "t-status", metric.status_label);
+        sw.style.color = inkColor;
+        head.appendChild(sw);
+      }
+    }
+    card.appendChild(head);
+
+    const hist = Array.isArray(metric.history) ? metric.history : [];
+    if (hist.length || metric.source) {
+      const det = el("div", "m-detail");
+      const inner = el("div", "inner");
+      inner.appendChild(metricDetail(metric));
+      det.appendChild(inner);
+      card.appendChild(det);
+      toggleCard(card, head);
+    } else {
+      head.style.cursor = "default";
+      const cv = head.querySelector(".m-chev");
+      if (cv) cv.style.visibility = "hidden";
+    }
+    return card;
+  }
+
+  // ================= DASHBOARD RENDER =================
+  function skeletonDashboard() {
+    dash.innerHTML = "";
+    for (let i = 0; i < 2; i++) {
+      const c = el("div", "alert-card warn");
+      const h = el("div", "alert-head");
+      h.appendChild(el("span", "alert-dot"));
+      const b = el("div", "alert-body");
+      const t = el("div", "sk sk-line"); t.style.width = "50%";
+      const d = el("div", "sk sk-line"); d.style.width = "80%";
+      b.appendChild(t); b.appendChild(d);
+      h.appendChild(b); c.appendChild(h);
+      dash.appendChild(c);
+    }
+    const grid = el("div", "metric-lg-grid");
+    for (let i = 0; i < 2; i++) {
+      const c = el("div", "metric-card lg");
+      const h = el("div", "metric-head");
+      const t = el("div", "sk sk-line"); t.style.width = "60%";
+      const v = el("div", "sk sk-line"); v.style.width = "45%"; v.style.height = "26px"; v.style.margin = "12px 0 6px";
+      h.appendChild(t); h.appendChild(v); c.appendChild(h);
+      grid.appendChild(c);
+    }
+    dash.appendChild(grid);
+  }
+  function skeletonHeader() {
+    ptBar.innerHTML = "";
+    const av = el("div", "avatar sk"); av.textContent = "";
+    const id = el("div", "pt-id");
+    const n = el("div", "sk sk-line"); n.style.width = "160px"; n.style.height = "18px";
+    const m = el("div", "sk sk-line"); m.style.width = "110px";
+    id.appendChild(n); id.appendChild(m);
+    ptBar.appendChild(av); ptBar.appendChild(id);
+  }
+
+  function initials(name) {
+    if (!name) return "?";
+    const parts = name.trim().split(/[\s,]+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
+  function renderHeader(snap) {
+    ptBar.innerHTML = "";
+    const demo = snap && snap.demographics;
+    const name = demo && demo.name ? demo.name : "Patient " + currentPid;
+    const av = el("div", "avatar", initials(demo && demo.name));
+    ptBar.appendChild(av);
+
+    const idw = el("div", "pt-id");
+    idw.appendChild(el("div", "pt-name", name));
+    const meta = el("div", "pt-meta");
+    const bits = [];
+    if (demo && demo.age != null) bits.push(demo.age + "y");
+    if (demo && demo.sex) bits.push(demo.sex);
+    bits.push("MRN " + currentPid);
+    meta.appendChild(el("span", "demo", bits.join(" · ")));
+    if (demo && demo.source) { const c = sourceChip(demo.source); if (c) meta.appendChild(c); }
+    idw.appendChild(meta);
+    ptBar.appendChild(idw);
+
+    if (!LOCKED) {
+      const sw = el("div", "pid-switch");
+      const lab = el("label", null, "MRN");
+      lab.htmlFor = "pid-input";
+      const inp = el("input");
+      inp.id = "pid-input"; inp.type = "number"; inp.min = "1"; inp.step = "1";
+      inp.value = String(currentPid); inp.inputMode = "numeric";
+      inp.addEventListener("change", () => {
+        const v = toPosInt(inp.value);
+        if (v && v !== currentPid) { currentPid = v; resetConversation(); loadSnapshot(); }
+      });
+      sw.appendChild(lab); sw.appendChild(inp);
+      ptBar.appendChild(sw);
+    }
+  }
+
+  function renderDashboard(snap) {
+    dash.innerHTML = "";
+    const metrics = Array.isArray(snap.metrics) ? snap.metrics : [];
+
+    // ---- Allergy safety chips (atop the panel) ----
+    const algs = Array.isArray(snap.allergies) ? snap.allergies : [];
+    if (algs.length) {
+      const row = el("div", "alg-chips");
+      algs.slice(0, 4).forEach(a => {
+        const chip = el("div", "alg-chip");
+        chip.appendChild(el("span", "warn-ico", "⚠"));
+        chip.appendChild(el("span", null, "Allergy: " + (a.substance || "—")));
+        if (a.reaction) chip.title = "reaction: " + a.reaction;
+        row.appendChild(chip);
+      });
+      dash.appendChild(row);
+    }
+
+    // ---- Alerts & Notifications ----
+    const flags = Array.isArray(snap.constraint_flags) ? snap.constraint_flags : [];
+    const alertsSec = el("div", "dash-section");
+    const alabel = el("div", "sec-label");
+    alabel.appendChild(el("span", null, "Alerts & Notifications"));
+    if (flags.length) alabel.appendChild(el("span", "n", String(flags.length)));
+    alertsSec.appendChild(alabel);
+    if (flags.length) {
+      flags.slice()
+        .sort((a, b) => sevRank(b.severity) - sevRank(a.severity))
+        .forEach(f => alertsSec.appendChild(buildAlertCard(f, metrics)));
+    } else {
+      alertsSec.appendChild(calmAlertCard());
+    }
+    dash.appendChild(alertsSec);
+
+    // ---- Vitals & Labs metric cards ----
+    if (metrics.length) {
+      const large = metrics.filter(m => m.key === "bp" || m.key === "hr");
+      const tiles = metrics.filter(m => m.key !== "bp" && m.key !== "hr");
+      const sec = el("div", "dash-section");
+      const label = el("div", "sec-label");
+      label.appendChild(el("span", null, "Vitals & Labs"));
+      sec.appendChild(label);
+      if (large.length) {
+        const lg = el("div", "metric-lg-grid");
+        large.forEach(m => lg.appendChild(buildMetricCard(m, true)));
+        sec.appendChild(lg);
+      }
+      if (tiles.length) {
+        const tg = el("div", "metric-tiles");
+        tiles.forEach(m => tg.appendChild(buildMetricCard(m, false)));
+        sec.appendChild(tg);
+      }
+      dash.appendChild(sec);
+    }
+
+    // ---- Footer prompt into the chat ----
+    const foot = el("button", "ask-foot");
+    foot.type = "button";
+    const fi = el("span", "fi"); fi.appendChild(svgIcon(ICONS.chat, 2));
+    foot.appendChild(fi);
+    foot.appendChild(el("span", null, "Ask the Co-Pilot about this patient"));
+    const arr = el("span", "arr"); arr.appendChild(svgIcon(ICONS.chevron, 2.4));
+    foot.appendChild(arr);
+    foot.addEventListener("click", () => {
+      input.focus();
+      try { input.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+    });
+    dash.appendChild(foot);
+  }
+
+  // ================= STARTER CHIPS =================
+  function renderStarters() {
+    starters.innerHTML = "";
+    if (history.length) return; // only when transcript empty
+    const list = [
+      { label: "Brief me on this patient", kind: "text", message: "Brief me on this patient for today's visit" },
+      { label: "Anything overdue or flagged?", kind: "chip", intent: "care_gaps" }
+    ];
+    if (snapshot && snapshot.labs_by_test && Object.keys(snapshot.labs_by_test).length)
+      list.push({ label: "Lab trends", kind: "chip", intent: "lab_trend" });
+    if (snapshot && Array.isArray(snapshot.medications) && snapshot.medications.length >= 2)
+      list.push({ label: "Medication details", kind: "chip", intent: "med_detail" });
+
+    list.forEach(s => {
+      const b = el("button", "chip");
+      b.type = "button";
+      b.textContent = s.label;
+      b.addEventListener("click", () => {
+        if (busy) return;
+        if (s.kind === "text") sendTurn({ kind: "text", message: s.message });
+        else sendTurn({ kind: "chip", intent: s.intent, params: {}, echo: s.label });
+      });
+      starters.appendChild(b);
+    });
+  }
+
+  // ================= CHAT RENDER =================
+  function renderUser(text) {
+    const t = el("div", "turn user");
+    const b = el("div", "bubble"); b.textContent = text;
+    t.appendChild(b); transcript.appendChild(t); scrollTranscript();
+  }
+  function makeLoading() {
+    const t = el("div", "turn assistant");
+    const b = el("div", "bubble");
+    const ty = el("div", "typing");
+    ty.appendChild(el("span")); ty.appendChild(el("span")); ty.appendChild(el("span"));
+    b.appendChild(ty); t.appendChild(b);
+    transcript.appendChild(t); scrollTranscript();
+    return t;
+  }
+  function renderError(msg, node) {
+    const t = el("div", "turn assistant error");
+    const b = el("div", "bubble"); b.textContent = msg;
+    t.appendChild(b);
+    if (node && node.parentNode) transcript.replaceChild(t, node);
+    else transcript.appendChild(t);
+    scrollTranscript();
+  }
+
+  function renderAssistant(resp, node) {
+    const turn = el("div", "turn assistant");
+    const bubble = el("div", "bubble");
+    let content = false;
+
+    if (resp.degraded) {
+      const d = el("div", "degraded");
+      d.appendChild(el("div", null, "⚠ Partial briefing — some data unavailable"));
+      if (resp.notes) d.appendChild(el("div", "n", resp.notes));
+      bubble.appendChild(d); content = true;
+    }
+
+    // Register guideline metadata BEFORE building chips, so a gl chip inside a
+    // mixed briefing claim can already resolve its popover content.
+    registerGlMeta(resp.briefing);
+    registerGlMeta(resp.guideline_evidence);
+
+    if (Array.isArray(resp.briefing) && resp.briefing.length) {
+      resp.briefing.forEach(c => {
+        const cl = el("div", "claim");
+        cl.appendChild(el("p", "claim-text", c.text || ""));
+        const ct = makeCites(c.source_refs); if (ct) cl.appendChild(ct);
+        bubble.appendChild(cl);
+      });
+      content = true;
+    }
+
+    // Week 2: guideline evidence — reference knowledge under its OWN header,
+    // never mixed into the patient briefing (verifier separation rule §6.3).
+    if (Array.isArray(resp.guideline_evidence) && resp.guideline_evidence.length) {
+      const sec = el("div", "gl-section");
+      const head = el("div", "gl-head");
+      head.appendChild(el("span", null, "📖"));
+      head.appendChild(el("span", null, "Guideline evidence"));
+      sec.appendChild(head);
+      sec.appendChild(el("div", "gl-sub", "Reference knowledge — not this patient's chart."));
+      resp.guideline_evidence.forEach(c => {
+        const cl = el("div", "gl-claim");
+        cl.appendChild(el("div", null, c.text || ""));
+        const ct = makeCites(c.source_refs); if (ct) cl.appendChild(ct);
+        sec.appendChild(cl);
+      });
+      bubble.appendChild(sec); content = true;
+    }
+
+    if (Array.isArray(resp.constraint_flags) && resp.constraint_flags.length) {
+      resp.constraint_flags.forEach(f => {
+        const sev = (f.severity === "critical" || f.severity === "warning") ? f.severity : "info";
+        const line = el("div", "flagline " + sev);
+        line.style.marginTop = "10px";
+        line.appendChild(el("div", "fkind", (f.kind || sev).replace(/_/g, " ")));
+        line.appendChild(el("div", "fmsg", f.message || ""));
+        const ct = makeCites(f.source_refs); if (ct) line.appendChild(ct);
+        bubble.appendChild(line);
+      });
+      content = true;
+    }
+
+    const qList = Array.isArray(resp.quarantined_claims) ? resp.quarantined_claims : [];
+    const qCount = resp.quarantined_count || qList.length;
+    if (qList.length || qCount > 0) {
+      const q = el("div", "qbox");
+      q.appendChild(el("div", "qhead", "⚠ Unverified — needs chart review (not shown as fact)"));
+      if (qList.length) {
+        qList.forEach(qc => {
+          const item = el("div", "qclaim");
+          item.appendChild(el("div", null, qc.text || ""));
+          const ct = makeCites(qc.source_refs); if (ct) item.appendChild(ct);
+          q.appendChild(item);
+        });
+      } else {
+        q.appendChild(el("div", "qclaim", qCount + " claim(s) withheld pending chart review."));
+      }
+      bubble.appendChild(q); content = true;
+    }
+
+    if (resp.notes && !resp.degraded) { bubble.appendChild(el("div", "notes-line", resp.notes)); content = true; }
+    if (!content) bubble.appendChild(el("p", "claim-text", "No briefing content returned for this request."));
+
+    turn.appendChild(bubble);
+
+    if (resp.correlation_id) turn.appendChild(el("div", "meta", "ref " + resp.correlation_id));
+
+    // Week 2: the graph's handoff trail — collapsed "how this answer was
+    // assembled" (route → node with latency). Free-text reason renders here
+    // only (UI/trace surface; it never reaches logs).
+    if (Array.isArray(resp.handoffs) && resp.handoffs.length) {
+      turn.appendChild(buildHandoffTrail(resp.handoffs));
+    }
+
+    if (Array.isArray(resp.action_chips) && resp.action_chips.length) {
+      const cw = el("div", "achips");
+      resp.action_chips.forEach(ch => {
+        const b = el("button", "chip");
+        b.type = "button";
+        b.textContent = ch.label || ch.intent || "Action";
+        b.addEventListener("click", () => {
+          if (busy) return;
+          sendTurn({ kind: "chip", intent: ch.intent, params: ch.params || {}, echo: ch.label || ch.intent });
+        });
+        cw.appendChild(b);
+      });
+      turn.appendChild(cw);
+    }
+
+    if (node && node.parentNode) transcript.replaceChild(turn, node);
+    else transcript.appendChild(turn);
+    scrollTranscript();
+  }
+
+  // T5: chart card rendered from GET /labs/trend alongside the /chat answer.
+  // Charts only series with >=2 numeric points; caps at the 3 most recently
+  // active tests. Every latest point keeps its procedure_result cite pill —
+  // the chart shows nothing the physician cannot trace to a row.
+  function renderLabTrendCard(data) {
+    if (!data || !data.series) return null;
+    const entries = Object.keys(data.series).map(name => {
+      const pts = (data.series[name] || []).filter(p => isFinite(numify(p.value)));
+      return { name: name, pts: pts, latest: pts.length ? (pts[pts.length - 1].date || "") : "" };
+    }).filter(e => e.pts.length >= 2);
+    if (!entries.length) return null;
+    entries.sort((a, b) => b.latest < a.latest ? -1 : b.latest > a.latest ? 1 : 0);
+
+    const turn = el("div", "turn assistant trend-turn");
+    const card = el("div", "bubble trend-card");
+    card.appendChild(el("div", "trend-title", "📈 Lab trends" + (data.truncated ? " (older results not shown)" : "")));
+
+    entries.slice(0, 3).forEach(e => {
+      const sec = el("div", "trend-sec");
+      sec.appendChild(el("div", "trend-name", e.name));
+      const chart = trendChart(e.pts);
+      if (chart) sec.appendChild(chart);
+
+      // expandable history table (same hist-row pattern as the metric cards)
+      const det = document.createElement("details");
+      det.className = "trend-hist";
+      const sum = document.createElement("summary");
+      sum.appendChild(el("span", "tw", "›"));
+      sum.appendChild(el("span", null, "History · " + e.pts.length + " results"));
+      det.appendChild(sum);
+      e.pts.slice().reverse().forEach(p => {
+        const r = el("div", "hist-row");
+        r.appendChild(el("span", null, p.date || "—"));
+        const hv = el("span", "hv" + (p.abnormal ? " ab" : ""));
+        hv.textContent = (p.value || "—") + (p.units ? " " + p.units : "");
+        r.appendChild(hv);
+        det.appendChild(r);
+      });
+      sec.appendChild(det);
+
+      const cite = makeCite(e.pts[e.pts.length - 1].source);
+      if (cite) { const cw = el("div", "cites trend-cite"); cw.appendChild(cite); sec.appendChild(cw); }
+      card.appendChild(sec);
+    });
+
+    turn.appendChild(card);
+    return turn;
+  }
+
+  function buildHandoffTrail(handoffs) {
+    const det = document.createElement("details");
+    det.className = "handoffs";
+    const sum = document.createElement("summary");
+    const tw = el("span", "tw", "›");
+    sum.appendChild(tw);
+    sum.appendChild(el("span", null,
+      "How this answer was assembled · " + handoffs.length + " step" + (handoffs.length === 1 ? "" : "s")));
+    det.appendChild(sum);
+    const hops = el("div", "hops");
+    handoffs.slice().sort((a, b) => (a.seq || 0) - (b.seq || 0)).forEach(h => {
+      const row = el("div", "hop");
+      row.appendChild(el("span", "seq", String((h.seq != null ? h.seq : 0) + 1) + "."));
+      row.appendChild(el("span", "path",
+        (h.from_node || "?").replace(/_/g, " ") + " → " + (h.to_node || "?").replace(/_/g, " ")));
+      if (h.route) row.appendChild(el("span", "route", h.route.replace(/^route_to_/, "").replace(/_/g, " ")));
+      if (h.latency_ms != null) row.appendChild(el("span", "ms", Math.round(h.latency_ms) + " ms"));
+      if (h.reason) row.appendChild(el("span", "why", h.reason));
+      hops.appendChild(row);
+    });
+    det.appendChild(hops);
+    return det;
+  }
+
+  function summarize(resp) {
+    const parts = [];
+    if (Array.isArray(resp.briefing)) resp.briefing.forEach(c => { if (c.text) parts.push(c.text); });
+    if (Array.isArray(resp.constraint_flags)) resp.constraint_flags.forEach(f => { if (f.message) parts.push("[" + (f.severity || "info") + "] " + f.message); });
+    if (resp.notes) parts.push(resp.notes);
+    return parts.join(" ") || "(no verified content)";
+  }
+
+  // ================= NETWORK =================
+  function authHeaders(json, useDay) {
+    // /day spans the provider's whole schedule, so it needs the day-scoped
+    // token; every patient call uses the patient token.
+    const tok = (useDay && DAY_TOKEN) ? DAY_TOKEN : TOKEN;
+    const h = { "Authorization": "Bearer " + tok };
+    if (json) h["Content-Type"] = "application/json";
+    return h;
+  }
+  function humanError(status) {
+    if (status === 401) return "Session not authorized — reopen from the OpenEMR chart.";
+    if (status === 403) return "Not authorized for this patient (403).";
+    if (status === 429) return "Too many requests (429). Pause a moment and try again.";
+    if (status === 404) return "Not found (404).";
+    if (status === 400) return "The request could not be processed (400).";
+    if (status >= 500) return "The Co-Pilot service had a problem (" + status + "). Try again shortly.";
+    return "Request failed (" + status + ").";
+  }
+
+  function setEnabled(on) {
+    input.disabled = !on; send.disabled = !on;
+    const clipBtn = document.getElementById("clip");
+    if (clipBtn) clipBtn.disabled = !on;
+    document.querySelectorAll("#starters .chip, .achips .chip, .attach-go").forEach(b => { b.disabled = !on; });
+  }
+
+  function trimmedHistory() { return history.slice(-MAX_HISTORY).map(h => ({ role: h.role, text: h.text })); }
+
+  async function sendTurn(opts) {
+    if (busy) return;
+    busy = true; setEnabled(false);
+    starters.innerHTML = "";
+
+    const body = { pid: currentPid, history: trimmedHistory() };
+    let echo;
+    if (opts.kind === "chip") { body.chip_intent = opts.intent; body.chip_params = opts.params || {}; echo = opts.echo || opts.intent; }
+    else { body.message = opts.message; echo = opts.message; }
+
+    renderUser(echo);
+    history.push({ role: "user", text: echo });
+    const node = makeLoading();
+
+    // T5: the lab_trend chip also fetches the deterministic /labs/trend series
+    // in PARALLEL with /chat. The chart card AUGMENTS the text answer — any
+    // trend failure degrades silently to text-only (never blocks the turn).
+    let trendReq = null;
+    if (opts.kind === "chip" && opts.intent === "lab_trend") {
+      trendReq = fetch("/labs/trend?pid=" + encodeURIComponent(currentPid), { headers: authHeaders(false) })
+        .then(r => (r.ok ? r.json() : null))
+        .catch(() => null);
+    }
+
+    try {
+      const res = await fetch("/chat", { method: "POST", headers: authHeaders(true), body: JSON.stringify(body) });
+      if (!res.ok) {
+        renderError(humanError(res.status), node);
+      } else {
+        const data = await res.json();
+        renderAssistant(data, node);
+        history.push({ role: "assistant", text: summarize(data) });
+        if (trendReq) {
+          const trend = await trendReq;
+          const card = trend && renderLabTrendCard(trend);
+          if (card) { transcript.appendChild(card); scrollTranscript(); }
+        }
+      }
+    } catch (e) {
+      renderError("Could not reach the Co-Pilot service. Check your connection and try again.", node);
+    } finally {
+      busy = false; setEnabled(true); input.focus();
+    }
+  }
+
+  async function loadSnapshot() {
+    snapshot = null;
+    skeletonHeader();
+    skeletonDashboard();
+    try {
+      const res = await fetch("/snapshot?pid=" + encodeURIComponent(currentPid), { headers: authHeaders(false) });
+      if (!res.ok) {
+        renderHeader(null);
+        dash.innerHTML = "";
+        if (res.status === 403 || res.status === 404) {
+          // Friendly guidance instead of a dead panel: steer to the schedule.
+          const wrap = el("div", "inline-err");
+          wrap.appendChild(el("div", null,
+            "This patient isn't available to you (not found or not on your panel)."));
+          const btn = el("button", "chip");
+          btn.type = "button";
+          btn.textContent = "Open My Day to pick a patient";
+          btn.style.marginTop = "8px";
+          btn.addEventListener("click", () => selectTab("day"));
+          wrap.appendChild(btn);
+          dash.appendChild(wrap);
+        } else {
+          dash.appendChild(el("div", "inline-err", humanError(res.status)));
+        }
+        renderStarters();
+        return;
+      }
+      const data = await res.json();
+      snapshot = data;
+      renderHeader(data);
+      renderDashboard(data);
+      updateLaunchBadge(data);
+      renderStarters();
+    } catch (e) {
+      renderHeader(null);
+      dash.innerHTML = "";
+      dash.appendChild(el("div", "inline-err", "Could not load the patient snapshot. Check your connection and try again."));
+      renderStarters();
+    }
+  }
+
+  function resetConversation() {
+    history = [];
+    transcript.innerHTML = "";
+    renderStarters();
+  }
+
+  // ================= MY DAY =================
+  function skeletonDay() {
+    dayBar.innerHTML = "";
+    const d = el("div", "sk sk-line"); d.style.width = "180px"; d.style.height = "18px";
+    dayBar.appendChild(d);
+    dayScroll.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      const a = el("div", "appt");
+      const s = el("div", "sk sk-line"); s.style.width = "100%"; s.style.margin = "6px 0";
+      a.appendChild(s);
+      dayScroll.appendChild(a);
+    }
+  }
+
+  async function loadDay(force) {
+    if (dayLoaded && !force) return;
+    skeletonDay();
+    try {
+      const res = await fetch("/day?date=" + localISODate(), { headers: authHeaders(false, true) });
+      if (!res.ok) { renderDayError(humanError(res.status)); return; }
+      const data = await res.json();
+      dayLoaded = true;
+      renderDay(data);
+    } catch (e) {
+      renderDayError("Could not load today's schedule. Check your connection and try again.");
+    }
+  }
+  function renderDayError(msg) {
+    dayBar.innerHTML = "";
+    dayBar.appendChild(el("div", "day-date", "My Day"));
+    dayScroll.innerHTML = "";
+    dayScroll.appendChild(el("div", "inline-err", msg));
+  }
+
+  function prettyDate(iso) {
+    if (!iso) return "Today";
+    const d = new Date(iso + "T00:00:00");
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  }
+
+  function renderDay(data) {
+    const appts = data.appointments || [];
+    let crit = 0, warn = 0;
+    appts.forEach(a => {
+      const f = a.flags || {};
+      if (f.critical) crit += f.critical; if (f.warning) warn += f.warning;
+    });
+
+    dayBar.innerHTML = "";
+    dayBar.appendChild(el("div", "day-date", prettyDate(data.date)));
+    const sub = el("div", "day-sub");
+    sub.appendChild(el("span", "count", (data.count != null ? data.count : appts.length) + " patient" + ((data.count === 1) ? "" : "s") + " today"));
+    if (crit) { const p = el("span", "flagdot crit"); p.appendChild(el("span", "d")); p.appendChild(el("span", null, crit + " critical")); sub.appendChild(p); }
+    if (warn) { const p = el("span", "flagdot warn"); p.appendChild(el("span", "d")); p.appendChild(el("span", null, warn + " warning")); sub.appendChild(p); }
+    dayBar.appendChild(sub);
+    if (data.degraded) dayBar.appendChild(el("div", "notes-line", data.notes || "Partial schedule — some data unavailable"));
+
+    dayScroll.innerHTML = "";
+    if (!appts.length) {
+      const s = el("div", "state");
+      const big = el("div", "big"); big.appendChild(svgIcon(ICONS.problem, 1.7));
+      s.appendChild(big);
+      s.appendChild(el("h3", null, "No appointments for today."));
+      s.appendChild(el("p", null, "When your schedule fills in, patients appear here — flagged ones first."));
+      dayScroll.appendChild(s);
+      return;
+    }
+
+    appts.forEach(a => {
+      const f = a.flags || {};
+      const flagged = !!(f.critical || f.warning);
+      const critOnly = !!f.critical;
+      const btn = el("button", "appt" + (flagged ? " flagged" : "") + (flagged && !critOnly ? " warn-only" : ""));
+      btn.type = "button";
+      btn.appendChild(el("span", "time", a.time || "—"));
+
+      const who = el("div", "who");
+      const demo = a.demographics || {};
+      who.appendChild(el("div", "nm", demo.name || ("Patient " + a.pid)));
+      const bits = [];
+      if (demo.age != null) bits.push(demo.age + "y");
+      if (demo.sex) bits.push(demo.sex);
+      const rs = a.reason ? a.reason : "";
+      who.appendChild(el("div", "rs", (bits.length ? bits.join(" · ") + (rs ? " · " : "") : "") + rs));
+      btn.appendChild(who);
+
+      const right = el("div", "right");
+      if (a.changed_recently) right.appendChild(el("span", "changed", "changed"));
+      if (f.critical) { const fd = el("span", "flagdot crit"); fd.appendChild(el("span", "d")); fd.appendChild(el("span", null, String(f.critical))); right.appendChild(fd); }
+      else if (f.warning) { const fd = el("span", "flagdot warn"); fd.appendChild(el("span", "d")); fd.appendChild(el("span", null, String(f.warning))); right.appendChild(fd); }
+      btn.appendChild(right);
+
+      btn.addEventListener("click", () => {
+        if (EMR_HANDOFF) {
+          // In-EMR schedule: open the patient's REAL chart (the wrapper page,
+          // same-origin with OpenEMR, performs the tab navigation). The chart's
+          // own Co-Pilot is auto-scoped, so panel and patient always match.
+          try { parent.postMessage({ copilot: "open_patient", pid: a.pid }, "*"); } catch (e) {}
+          return;
+        }
+        currentPid = a.pid;
+        if (!LOCKED) { /* header input re-rendered by loadSnapshot */ }
+        selectTab("patient");
+        resetConversation();
+        loadSnapshot();
+      });
+      dayScroll.appendChild(btn);
+    });
+  }
+
+  // ================= TABS =================
+  const tabPatient = $("tab-patient"), tabDay = $("tab-day");
+  const viewPatient = $("view-patient"), viewDay = $("view-day");
+  function selectTab(which) {
+    const patient = which === "patient";
+    tabPatient.setAttribute("aria-selected", patient ? "true" : "false");
+    tabDay.setAttribute("aria-selected", patient ? "false" : "true");
+    viewPatient.classList.toggle("active", patient);
+    viewDay.classList.toggle("active", !patient);
+    if (!patient) loadDay(false);
+    if (patient && !snapshot) loadSnapshot();   // lazy: never show an empty patient view
+  }
+  tabPatient.addEventListener("click", () => selectTab("patient"));
+  tabDay.addEventListener("click", () => selectTab("day"));
+
+  // ================= COMPOSER =================
+  function autoGrow() { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
+  composer.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text || busy) return;
+    input.value = ""; autoGrow();
+    sendTurn({ kind: "text", message: text });
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); composer.requestSubmit(); }
+  });
+  input.addEventListener("input", autoGrow);
+
+  // ================= UPLOAD + INGEST (Week 2, D7) =================
+  const clip = $("clip"), fileInput = $("file-input"), attachBar = $("attach-bar");
+  let pendingFile = null;
+  let pendingDocType = "lab_report";
+
+  clip.addEventListener("click", () => { if (!busy) fileInput.click(); });
+  fileInput.addEventListener("change", () => {
+    const f = fileInput.files && fileInput.files[0];
+    fileInput.value = "";
+    if (!f) return;
+    pendingFile = f;
+    pendingDocType = /intake/i.test(f.name) ? "intake_form"
+      : /med/i.test(f.name) ? "medication_list" : "lab_report";
+    renderAttachBar();
+  });
+
+  function fmtSize(n) {
+    if (!isFinite(n)) return "";
+    if (n >= 1048576) return (n / 1048576).toFixed(1) + " MB";
+    if (n >= 1024) return Math.round(n / 1024) + " KB";
+    return n + " B";
+  }
+  function clearAttach() { pendingFile = null; renderAttachBar(); }
+  function renderAttachBar() {
+    if (!pendingFile) { attachBar.style.display = "none"; attachBar.innerHTML = ""; return; }
+    attachBar.innerHTML = "";
+    attachBar.style.display = "flex";
+    attachBar.appendChild(el("span", null, "📎"));
+    const nm = el("span", "attach-name", pendingFile.name);
+    nm.title = pendingFile.name;
+    attachBar.appendChild(nm);
+    attachBar.appendChild(el("span", "attach-size", fmtSize(pendingFile.size)));
+    const seg = el("div", "doct-seg");
+    seg.setAttribute("role", "radiogroup");
+    seg.setAttribute("aria-label", "Document type");
+    [["lab_report", "Lab PDF"], ["intake_form", "Intake form"], ["medication_list", "Med list"]].forEach(([val, label]) => {
+      const b = el("button", "doct" + (pendingDocType === val ? " on" : ""), label);
+      b.type = "button";
+      b.className = pendingDocType === val ? "on" : "";
+      b.addEventListener("click", () => { pendingDocType = val; renderAttachBar(); });
+      seg.appendChild(b);
+    });
+    attachBar.appendChild(seg);
+    const actions = el("div", "attach-actions");
+    const go = el("button", "attach-go", "Ingest");
+    go.type = "button";
+    go.addEventListener("click", doIngest);
+    actions.appendChild(go);
+    const x = el("button", "attach-x");
+    x.type = "button"; x.title = "Remove attachment"; x.setAttribute("aria-label", "Remove attachment");
+    x.appendChild(svgIcon('<path d="M18 6 6 18M6 6l12 12"/>', 2.4));
+    x.addEventListener("click", clearAttach);
+    actions.appendChild(x);
+    attachBar.appendChild(actions);
+  }
+
+  function ingestHumanError(status) {
+    if (status === 404) return "Document ingestion isn't enabled on this server.";
+    if (status === 413) return "This file is too large to ingest. Try a smaller document.";
+    if (status === 415) return "Unsupported file type — only PDF, PNG or JPG documents can be ingested.";
+    if (status === 403) return "Not authorized to add documents for this patient (403).";
+    if (status === 422) return "The upload was rejected (empty file or unknown document type).";
+    return humanError(status);
+  }
+
+  function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+  function humanizeFieldId(fid) {
+    return String(fid).split(".").map(p => p.replace(/_/g, " ")).join(" — ");
+  }
+  // Backend gaps arrive as "field.sub: not_found" / "field.sub:
+  // failed_verification (reason)". Render them in words — a gap is stated,
+  // never silently absent, and never shown as data.
+  function gapToWords(g) {
+    const m = String(g).match(/^([\w.]+):\s*(not_found|failed_verification)\s*(?:\((.*)\))?$/);
+    if (!m) return String(g);
+    const field = cap(humanizeFieldId(m[1]));
+    if (m[2] === "not_found") return field + " not found on the document — not recorded.";
+    return field + " could not be verified against the document text" +
+      (m[3] ? " (" + m[3] + ")" : "") + " — not recorded.";
+  }
+
+  function summarizeIngest(res) {
+    if (res.deduplicated || res.status === "deduplicated") return "Document already on file — no new records.";
+    if (res.status === "persisted")
+      return "Document ingested: " + res.fields_extracted + " of " + res.fields_total + " fields recorded.";
+    if (res.status === "needs_review") return "Scanned document — fields need review; nothing recorded automatically.";
+    return "Document could not be ingested.";
+  }
+
+  function renderIngestCard(res, node) {
+    const turn = el("div", "turn assistant");
+    const bubble = el("div", "bubble");
+    const dedup = res.deduplicated || res.status === "deduplicated";
+
+    let head;
+    if (dedup) {
+      head = el("div", "ing-head", "🗂 Document already on file");
+    } else if (res.status === "persisted") {
+      head = el("div", "ing-head good", "✓ Document ingested");
+    } else if (res.status === "needs_review") {
+      head = el("div", "ing-head warn", "⚠ Scanned document — needs review");
+    } else {
+      head = el("div", "ing-head crit", "✕ Document could not be ingested");
+    }
+    bubble.appendChild(head);
+
+    if (dedup) {
+      bubble.appendChild(el("div", "dedup-box",
+        "This document was already ingested for this patient — no new records were created."));
+    } else if (res.status === "persisted") {
+      bubble.appendChild(el("div", "ing-sub",
+        res.fields_extracted + " of " + res.fields_total +
+        " fields verified against the document text and recorded" +
+        (res.document_id != null ? " · document #" + res.document_id : "") + "."));
+    }
+
+    const persisted = Array.isArray(res.persisted) ? res.persisted : [];
+    if (persisted.length) {
+      bubble.appendChild(el("div", "ing-sec", "Recorded facts — click a citation to see the source"));
+      const cw = el("div", "cites");
+      persisted.forEach(r => { const c = makeCite(r); if (c) cw.appendChild(c); });
+      bubble.appendChild(cw);
+    }
+
+    const needsReview = Array.isArray(res.needs_review) ? res.needs_review : [];
+    if (needsReview.length) {
+      const nr = el("div", "nr-box");
+      nr.appendChild(el("div", null,
+        "This document has no machine-readable text layer, so " + needsReview.length +
+        " field(s) could not be deterministically verified. They are flagged for human review — " +
+        "nothing was recorded automatically."));
+      nr.appendChild(el("div", "nr-fields",
+        needsReview.map(f => cap(humanizeFieldId(f))).join(" · ")));
+      bubble.appendChild(nr);
+    }
+
+    const gaps = Array.isArray(res.gaps) ? res.gaps : [];
+    if (gaps.length) {
+      bubble.appendChild(el("div", "ing-sec", "Gaps — stated, never inferred"));
+      gaps.forEach(g => bubble.appendChild(el("div", "gap-line", gapToWords(g))));
+    }
+
+    if (res.notes) bubble.appendChild(el("div", "notes-line", res.notes));
+
+    turn.appendChild(bubble);
+    if (res.correlation_id) turn.appendChild(el("div", "meta", "ref " + res.correlation_id));
+    if (node && node.parentNode) transcript.replaceChild(turn, node);
+    else transcript.appendChild(turn);
+    scrollTranscript();
+  }
+
+  async function doIngest() {
+    if (!pendingFile || busy) return;
+    const file = pendingFile, docType = pendingDocType;
+    clearAttach();
+    busy = true; setEnabled(false);
+    starters.innerHTML = "";
+    const label = docType === "intake_form" ? "Intake form"
+      : docType === "medication_list" ? "Medication list" : "Lab report";
+    renderUser("📎 " + label + ": " + file.name);
+    // History (replayed to /chat) gets a filename-free line: uploaded file
+    // names routinely contain patient names.
+    history.push({ role: "user", text: "Uploaded a " + label.toLowerCase() + " document." });
+    const node = makeLoading();
+    try {
+      const fd = new FormData();
+      fd.append("file", file, file.name);
+      fd.append("pid", String(currentPid));
+      fd.append("doc_type", docType);
+      const res = await fetch("/ingest", { method: "POST", headers: authHeaders(false), body: fd });
+      if (!res.ok) {
+        renderError(ingestHumanError(res.status), node);
+      } else {
+        const data = await res.json();
+        renderIngestCard(data, node);
+        history.push({ role: "assistant", text: summarizeIngest(data) });
+      }
+    } catch (e) {
+      renderError("Could not reach the Co-Pilot service to upload the document. Check your connection and try again.", node);
+    } finally {
+      busy = false; setEnabled(true);
+    }
+  }
+
+  // ================= OVERLAY (floating helper) =================
+  const launcher = $("launcher"), launchBadge = $("launch-badge"), minBtn = $("min-btn");
+  function setOverlayOpen(open) {
+    document.body.classList.toggle("closed", !open);
+    // Tell the parent iframe wrapper to grow/shrink. The parent's size lives
+    // ONLY in that single postMessage, so a dropped/blocked message would leave
+    // the iframe stuck (e.g. frozen at 76px after a minimize->reopen). Post once
+    // now, then RE-ASSERT the same state on a short timeout so a missed message
+    // self-heals without needing a page reload. The parent handler is idempotent,
+    // so the retry is harmless when the first message already landed.
+    function post() { try { parent.postMessage({ copilot: "state", open: open }, "*"); } catch (e) {} }
+    post();
+    setTimeout(post, 120);
+  }
+  function updateLaunchBadge(data) {
+    if (!OVERLAY || !launchBadge) return;
+    const flags = (data && data.constraint_flags) || [];
+    const crit = flags.filter((f) => f.severity === "critical").length;
+    const warn = flags.filter((f) => f.severity === "warning").length;
+    launchBadge.classList.remove("show", "warn");
+    if (crit) { launchBadge.textContent = String(crit); launchBadge.classList.add("show"); }
+    else if (warn) { launchBadge.textContent = String(warn); launchBadge.classList.add("show", "warn"); }
+  }
+  if (OVERLAY) {
+    document.body.classList.add("overlay", "closed");
+    // Launcher always (re-)asserts open:true — never guard on "already open",
+    // because the parent iframe may be out of sync (its size is the only source
+    // of truth for open/closed on that side). An unconditional post guarantees
+    // a click reopens the panel even if a prior state message was dropped.
+    launcher.addEventListener("click", () => setOverlayOpen(true));
+    minBtn.addEventListener("click", () => setOverlayOpen(false));
+    // Post the initial (closed) state once so the parent wrapper and the panel
+    // start in agreement instead of relying on the parent's default alone.
+    setOverlayOpen(false);
+  }
+
+  // ================= INIT =================
+  function showUnauthorized() {
+    // No valid session token: the panel is inert until reopened from OpenEMR.
+    setEnabled(false);
+    if (dash) {
+      dash.innerHTML = "";
+      dash.appendChild(el("div", "inline-err",
+        "Session not authorized — reopen from the OpenEMR chart."));
+    }
+  }
+  // ?view=day opens straight to the schedule (the in-EMR "Co-Pilot" menu entry).
+  const START_VIEW = new URLSearchParams(location.search).get("view");
+  resolveToken().then((ok) => {
+    if (!ok) { showUnauthorized(); return; }
+    if (START_VIEW === "day") {
+      selectTab("day");
+    } else {
+      loadSnapshot();
+      if (!OVERLAY) input.focus();
+    }
+  });
+})();
+</script>
+</body>
+</html>

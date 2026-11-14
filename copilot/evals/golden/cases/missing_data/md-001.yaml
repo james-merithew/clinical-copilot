@@ -1,0 +1,17 @@
+id: md-001
+category: missing_data
+notes: 'Failure mode guarded: fabrication on a completely EMPTY chart. The deterministic mock turn over
+  a patient with zero rows must produce zero claims and zero flags — never an invented history.'
+input:
+  mode: chat
+  pid: 9103
+  question: null
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 0
+    expected_quarantined: 0
+    ground_truth_values: []
+    expected_flags: {}

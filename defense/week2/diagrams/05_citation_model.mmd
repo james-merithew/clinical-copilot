@@ -1,0 +1,71 @@
+classDiagram
+    direction LR
+
+    class AgentResponse {
+        +correlation_id : str
+        +briefing : list~Claim~
+        +guideline_evidence : list~Claim~ new-defaulted
+        +handoffs : list~Handoff~ new-defaulted
+        +quarantined_claims : list~Claim~
+        +constraint_flags +action_chips +degraded +notes
+    }
+
+    class Claim {
+        +text : str
+        +source_refs : list~AnySourceRef~
+    }
+
+    class AnySourceRef {
+        <<discriminated union on source_type>>
+    }
+
+    class SourceRef {
+        +source_type : patient_record
+        +table : SourceTable
+        +primary_key : int
+        +label : str
+    }
+
+    class GuidelineRef {
+        +source_type : guideline
+        +doc_id : str
+        +chunk_id : str
+        +section : str
+        +label : str
+    }
+
+    class DocumentRef {
+        +source_type : document
+        +document_id : int
+        +page : int
+        +field_id : str
+        +bbox : BBox or None
+        +quote : str
+        +label : str
+    }
+
+    class BBox {
+        +x0 : float
+        +y0 : float
+        +x1 : float
+        +y1 : float
+        normalized 0-1, page-relative
+    }
+
+    class Handoff {
+        +seq +from_node +to_node
+        +route +reason +payload_summary
+        +correlation_id +latency_ms
+    }
+
+    AgentResponse "1" o-- "*" Claim
+    AgentResponse "1" o-- "*" Handoff
+    Claim "1" o-- "*" AnySourceRef
+    AnySourceRef <|-- SourceRef
+    AnySourceRef <|-- GuidelineRef
+    AnySourceRef <|-- DocumentRef
+    DocumentRef o-- BBox
+
+    note for SourceRef "Points to a real openemr DB PK, e.g. procedure_result.procedure_result_id. Week 1 shape, unchanged payload."
+    note for GuidelineRef "Points to a corpus chunk: doc_id + chunk slug in copilot/corpus/guidelines/. Never a patient fact."
+    note for DocumentRef "Points to a page region of documents.id - rendered as a bbox overlay (solid = text-layer verified, dashed = VLM approximate)."

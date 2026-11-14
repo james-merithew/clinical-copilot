@@ -1,0 +1,22 @@
+{
+  "name": "openemr/oe-module-copilot",
+  "description": "OpenEMR Custom Module - Clinical Co-Pilot (read-only AI chart card)",
+  "type": "openemr-module",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "James Merithew",
+      "role": "Developer"
+    }
+  ],
+  "keywords": ["openemr", "openemr-module", "copilot", "ai"],
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {"OpenEMR\\Modules\\Copilot\\": "src/"}
+  },
+  "require": {
+    "openemr/oe-module-installer-plugin": "^0.1.0",
+    "php": ">=7.1",
+    "symfony/event-dispatcher": "^4.4 || ^5.0 || ^6.0 || ^7.0"
+  }
+}

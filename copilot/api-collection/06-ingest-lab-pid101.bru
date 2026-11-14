@@ -1,0 +1,51 @@
+meta {
+  name: 06 Ingest - lab PDF (pid 101)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/ingest
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:multipart-form {
+  pid: 101
+  doc_type: lab_report
+  file: @file(../tests/ingest/fixtures/demo_lab_delgado.pdf)
+}
+
+script:post-response {
+  // Capture the new document_id so the viewer requests (07-09) can use it.
+  if (res.body && res.body.document_id) {
+    bru.setVar("documentId", res.body.document_id);
+  }
+}
+
+docs {
+  Week 2 document ingestion. Uploads the synthetic lab PDF for Showcase A
+  (pid 101). Requires the sidecar to run with COPILOT_INGEST_ENABLED=true and the
+  copilot schema seeded (deploy/seeder/live_seed.sql). The multipart form carries
+  `pid`, `doc_type` (lab_report | intake_form), and the `file`.
+
+  Expect an IngestResult: `status` (persisted | deduplicated | needs_review |
+  failed), `document_id`, `persisted[]` citations (DocumentRef + the chart-row
+  SourceRef each fact became), `gaps[]` stated in words, `needs_review[]`, and the
+  field counts. Fail-closed: a value whose verbatim quote does not token-align to
+  the PDF text layer is NOT persisted — it appears in `gaps`. Re-running this
+  request returns `deduplicated=true` with zero new rows (UNIQUE(content_hash,pid)).
+
+  The post-response script stores `document_id` into the `documentId` collection
+  var for the following requests.
+}
+
+assert {
+  res.status: eq 200
+  res.body.correlation_id: isDefined
+  res.body.status: isDefined
+}

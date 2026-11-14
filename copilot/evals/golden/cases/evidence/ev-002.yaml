@@ -1,0 +1,21 @@
+id: ev-002
+category: evidence
+notes: 'Failure mode guarded: wrong-guideline citation for glycemic targets (e.g. citing the CKD doc).
+  The ADA glycemic-targets doc must rank in the top-k.'
+input:
+  mode: chat
+  pid: 9101
+  question: What A1c target is appropriate for most nonpregnant adults with diabetes?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: ada-soc-glycemic
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

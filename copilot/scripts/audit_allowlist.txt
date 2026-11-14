@@ -1,0 +1,25 @@
+# Accepted (allowlisted) security advisories — pip-audit --ignore-vuln targets.
+#
+# POLICY. This is a demo/education deployment on SYNTHETIC data only — no real PHI ever
+# (invariant #8), only-demo-data. Each advisory below is ACCEPTED with a stated reason and
+# TRACKED for a dedicated dependency-bump change. The audit still FAILS on any NEW advisory
+# not listed here, so this is a triaged allowlist, not a disabled gate. Reviewed 2026-07-21.
+#
+# Format: one advisory ID per line; text after '#' is the justification. Blank lines and
+# full-line comments are ignored. security_audit.sh reads the first token of each line.
+#
+# --- pytest (DEV/TEST ONLY — never in the deployed sidecar runtime) -------------------
+PYSEC-2026-1845   # predictable /tmp/pytest-of-{user} dir on UNIX; dev tool only, runs on ephemeral CI/dev; fix pytest 9.0.3 (major bump, coordinate w/ pytest-asyncio)
+#
+# --- starlette (RUNTIME, transitive via fastapi==0.115.6, which pins starlette<0.42) ---
+# Every starlette fix requires bumping FastAPI to a line allowing starlette >=0.47/1.x — a
+# coordinated framework bump scheduled as its own change (redeploy + full re-test), not a
+# drop-in. Most are unauthenticated-DoS shapes; the sidecar is a private service behind the
+# OpenEMR web tier (not public), which bounds exposure until the bump lands.
+PYSEC-2026-161    # Host-header-based URL reconstruction; fix 1.0.1
+PYSEC-2026-248    # request-path-based URL reconstruction; fix 1.3.0
+PYSEC-2026-249    # request.form() accepts unbounded parts (DoS); fix 1.3.1
+PYSEC-2026-1941   # large multipart file spool-to-disk (DoS); fix 0.47.2
+PYSEC-2026-1942   # crafted Range header quadratic blowup (DoS); fix 0.49.1
+PYSEC-2026-2280   # route-dispatch issue; fix 1.1.0
+PYSEC-2026-2281   # StaticFiles path handling on Windows; fix 1.1.0 (sidecar serves no StaticFiles)

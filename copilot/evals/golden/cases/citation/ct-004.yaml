@@ -1,0 +1,21 @@
+id: ct-004
+category: citation
+notes: 'Failure mode guarded: wrong-row citation — a metformin dose claim citing the lisinopril row. Value
+  grounding (claim numbers must appear in cited evidence) must quarantine it.'
+input:
+  mode: chat
+  pid: 9101
+  question: What dose of metformin is he on?
+  transcript: ct-004.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '10'
+    briefing_must_not_contain:
+    - Metformin 1000 mg daily

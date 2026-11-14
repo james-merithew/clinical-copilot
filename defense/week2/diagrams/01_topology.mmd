@@ -1,0 +1,41 @@
+flowchart LR
+    subgraph PUBLIC["PUBLIC - Railway edge, TLS enforced"]
+        BROWSER["Browser: OpenEMR chart panel<br/>upload, chips, bbox viewer"]
+        EMRWEB["OpenEMR web (Apache/PHP)<br/>REST POST /api/patient/:pid/document<br/>(OAuth2 password grant)"]
+    end
+
+    subgraph PRIVATE["PRIVATE - Railway internal network"]
+        subgraph SIDECAR["Co-Pilot sidecar (FastAPI, stateless, no PHI at rest)"]
+            API["/chat /ingest /snapshot /day<br/>/health /ready /metrics/summary /dashboard<br/>correlation ID assigned here"]
+            AUTHZ["Authorization Gateway<br/>deterministic user-patient scope<br/>BEFORE any read or write"]
+            GRAPH["Supervisor + 2 workers + answerer<br/>LLM = untrusted planner, no DB handle"]
+            INGEST["Ingestion Service<br/>deterministic code path,<br/>never invoked by a model tool call"]
+            VERIFY["Verifier (fail-closed)<br/>attribution + guideline/patient partition"]
+            RAGIDX["In-process RAG index<br/>BM25 + dense, built at startup"]
+        end
+        DB[("MariaDB<br/>openemr schema: SELECT-only via copilot_ro<br/>5 write tables: INSERT-only via copilot_ingest<br/>copilot schema: ingestion_run, provenance, intake_fact")]
+    end
+
+    subgraph EXTERNAL["EXTERNAL - BAA + zero-data-retention assumed"]
+        ANTH["Anthropic<br/>chat + vision (forced tool)"]
+        COHERE["Cohere<br/>embed-v4.0 / rerank-v3.5<br/>3s timeout, Noop fallback"]
+        LS["LangSmith<br/>traces: IDs, counts, timings only"]
+    end
+
+    BROWSER -->|"HTTPS"| API
+    API --> AUTHZ
+    AUTHZ --> GRAPH
+    AUTHZ --> INGEST
+    GRAPH --> VERIFY
+    GRAPH --> RAGIDX
+    GRAPH -->|"read-only, patient-scoped<br/>(copilot_ro)"| DB
+    INGEST -->|"INSERT-only, table allowlist<br/>(copilot_ingest)"| DB
+    INGEST -->|"OAuth2 document upload<br/>then sha3-512 id resolve"| EMRWEB
+    EMRWEB --- DB
+    GRAPH -->|"timeout + bounded retry"| ANTH
+    INGEST -->|"vision extract, retry on invalid <= 2"| ANTH
+    RAGIDX -->|"embed + rerank"| COHERE
+    SIDECAR -.->|"best-effort, never fatal"| LS
+
+    classDef trust stroke-width:3px,stroke:#b91c1c;
+    class AUTHZ,VERIFY trust;

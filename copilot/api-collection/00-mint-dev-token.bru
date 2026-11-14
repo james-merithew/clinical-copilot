@@ -1,0 +1,33 @@
+meta {
+  name: 00 Mint dev token
+  type: http
+  seq: 0
+}
+
+get {
+  url: {{baseUrl}}/dev/token?scope=patient&pid=101
+  auth: none
+}
+
+script:post-response {
+  // Populate {{token}} for every downstream request. Requires the sidecar
+  // running with COPILOT_AUTH_DEV_MODE=true (dev only; 404 in production).
+  if (res.getStatus() === 200 && res.getBody() && res.getBody().token) {
+    bru.setEnvVar("token", res.getBody().token);
+  }
+}
+
+docs {
+  RUN THIS FIRST. Mints a short-lived, patient-bound session token for pid 101
+  (the Week-2 replacement for the revoked reusable bearer) and stores it in the
+  {{token}} env var used by every authenticated request below.
+
+  Dev only: /dev/token exists only when COPILOT_AUTH_DEV_MODE=true. In production
+  it returns 404 by design — obtain a token from the OpenEMR Co-Pilot panel
+  (it is minted after a real aclCheckCore('patients','demo')) and paste it into
+  the {{token}} env var instead.
+}
+
+assert {
+  res.status: eq 200
+}

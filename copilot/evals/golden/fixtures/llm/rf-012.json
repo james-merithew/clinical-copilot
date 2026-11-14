@@ -1,0 +1,54 @@
+{
+  "_case": "rf-012",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {},
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "Hemoglobin A1c 8.4 % abnormal, range 4.0-5.6",
+                "handles": [
+                  "lab:0"
+                ]
+              }
+            ],
+            "action_chips": [
+              {
+                "label": "Order a CBC now",
+                "intent": "care_gaps",
+                "params": {}
+              },
+              {
+                "label": "Show A1c trend",
+                "intent": "lab_trend",
+                "params": {}
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    participant UI as Co-Pilot panel
+    participant API as POST /ingest (FastAPI)
+    participant AZ as Authz Gateway
+    participant SVC as Ingestion Service (deterministic)
+    participant EMR as OpenEMR REST API
+    participant VLM as Anthropic vision (forced tool)
+    participant PDF as pypdfium2 text layer
+    participant DB as MariaDB (copilot_ingest)
+
+    UI->>API: file + pid + doc_type (correlation ID assigned)
+    API->>AZ: authorize(user, pid)
+    AZ-->>API: allow (deny = clean refusal, nothing runs)
+    API->>SVC: run ingestion (correlation ID threaded)
+    SVC->>SVC: sha3-512 content hash
+    SVC->>DB: SELECT copilot.ingestion_run WHERE content_hash + pid
+    alt duplicate upload
+        DB-->>SVC: existing run found
+        SVC-->>UI: IngestResult deduplicated=true, zero new rows
+    else new document
+        SVC->>EMR: POST /api/patient/:pid/document?path=/Lab_Report (OAuth2)
+        EMR-->>SVC: true/false only (no id returned)
+        SVC->>DB: SELECT documents.id by sha3-512 hash (OpenEMR native hash)
+        Note over SVC,DB: fallback: direct documents row w/ document_data<br/>behind COPILOT_INGEST_DB_DOC_FALLBACK
+        SVC->>VLM: PDF as document block, forced extraction tool
+        VLM-->>SVC: LabReportExtraction JSON (model_validate, retry <= 2 on invalid)
+        loop each ExtractedField
+            SVC->>PDF: search verbatim_quote on claimed page
+            PDF-->>SVC: found = verified + authoritative bbox (normalized 0-1)
+            Note over SVC,PDF: not found = failed_verification,<br/>NOT persisted, surfaced as gap
+        end
+        SVC->>DB: TXN: procedure_order, procedure_order_code, procedure_report, procedure_result (verified fields only, document_id link)
+        SVC->>DB: copilot.provenance rows + ingestion_run row
+        SVC-->>UI: IngestResult: persisted facts w/ citations, gaps, needs_review
+    end

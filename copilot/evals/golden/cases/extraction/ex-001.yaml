@@ -1,0 +1,30 @@
+id: ex-001
+category: extraction
+notes: 'Failure mode guarded: any extracted analyte value diverging from the PDF (invented or mis-read
+  value). All 10 lab_simple.pdf analytes must round-trip exactly per ground_truth.json, each text-layer
+  verified.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_fields:
+      cmp_glucose: '142'
+      cmp_bun: '15'
+      cmp_creatinine: '0.9'
+      cmp_egfr: '95'
+      cmp_sodium: '139'
+      cmp_potassium: '4.2'
+      cmp_chloride: '102'
+      cmp_co2: '26'
+      cmp_calcium: '9.4'
+      a1c: '8.4'
+    expect_all_status: verified
+    ground_truth_ref: lab_simple.pdf
+requires:
+- ingest

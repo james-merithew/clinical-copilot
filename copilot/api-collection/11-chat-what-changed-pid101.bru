@@ -1,0 +1,50 @@
+meta {
+  name: 11 Chat - what changed (Week 2 flow, pid 101)
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "pid": 101,
+    "message": "what changed for this patient?"
+  }
+}
+
+docs {
+  The full Week 2 chat flow. Run request 06 (ingest the lab PDF) first, then this:
+  the uploaded document's verified facts now appear in the briefing as ordinary
+  cited chart rows, and the supervisor graph engages workers as needed.
+
+  Watch for:
+  - `briefing[]` — verified patient claims, each with `source_refs`; document-
+    derived labs cite `procedure_result` PKs (and carry DocumentRef provenance).
+  - `guideline_evidence[]` — claims citing ONLY guideline (`gl:`) handles, kept
+    SEPARATE from the patient briefing by the verifier's partition rule (ask
+    "what's the target A1c, and what supports it?" to populate this).
+  - `handoffs[]` — the supervisor -> intake_extractor / evidence_retriever ->
+    answerer trail ("how this answer was assembled"), enum-bound and inspectable.
+  - `degraded` / `notes` — set true/explained if a dependency fell back (e.g.
+    Cohere down -> BM25-only retrieval), never a fabricated value.
+
+  Requires a valid session token ({{token}}); identity (the requesting provider) is pinned
+  server-side — the client only chooses `pid`.
+}
+
+assert {
+  res.status: eq 200
+  res.body.correlation_id: isDefined
+  res.body.briefing: isDefined
+  res.body.handoffs: isDefined
+}

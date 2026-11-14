@@ -1,0 +1,26 @@
+id: ev-010
+category: evidence
+notes: 'Failure mode guarded: guideline knowledge leaking into the patient briefing. A mixed patient+guideline
+  answer must keep gl-only claims under guideline_evidence (verifier separation rule) — reference knowledge
+  is never a chart fact.'
+input:
+  mode: chat
+  pid: 9101
+  question: Given his eGFR and A1c, what does the ADA recommend for CKD screening in diabetes?
+  graph_script:
+    patient_labs_query: A1c
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: ada-soc-ckd-dm
+    separation_check: true
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag
+- graph

@@ -1,0 +1,22 @@
+{
+  "_case": "rf-002",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [],
+            "notes": "That is a general medical knowledge question. I can only summarize what is documented in this patient's chart, so I can't provide general treatment recommendations."
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

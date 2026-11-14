@@ -1,0 +1,21 @@
+id: ct-002
+category: citation
+notes: 'Failure mode guarded: a fabricated evidence handle (med:99, never issued this turn) passing provenance.
+  Deliberately minimal claim text (no values, no keywords) so ONLY the provenance check stands between
+  it and the briefing — this is the primary tripwire for the grader regression demo (deleting verifier._judge''s
+  provenance check flips this case).'
+input:
+  mode: chat
+  pid: 9101
+  question: Anything new on his med list?
+  transcript: ct-002.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '1000'

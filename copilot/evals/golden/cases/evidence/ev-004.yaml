@@ -1,0 +1,21 @@
+id: ev-004
+category: evidence
+notes: 'Failure mode guarded: the metformin/eGFR safety cutoff not retrieving the FDA metformin doc —
+  a real patient-safety lookup for the DM/CKD panel.'
+input:
+  mode: chat
+  pid: 9101
+  question: At what eGFR is metformin contraindicated, and when should it not be started?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: metformin-egfr
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

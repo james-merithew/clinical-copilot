@@ -1,0 +1,34 @@
+id: ex-016
+category: extraction
+notes: 'Failure mode guarded: a VLM-misread medication STRENGTH being persisted. Stub VLM returns
+  Metformin strength "100 mg" while the row quote reads "1000 mg" (quote untouched): token-aligned
+  verification must mark metformin.strength failed_verification, keep it OUT of the lists comments
+  (which must then start with the verified route), and state the gap in words.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: medlist_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_value:
+      field_id: metformin.strength
+      value: 100 mg
+    expect_not_persisted:
+    - metformin.strength
+    expect_gap_fields:
+    - metformin.strength
+    expected_meds:
+    - name: Metformin
+      dose: oral
+    - name: Lisinopril
+      dose: 10 mg
+    - name: Atorvastatin
+      dose: 20 mg
+    - name: Sertraline
+      dose: 100 mg
+    ground_truth_ref: medlist_simple.pdf
+requires:
+- ingest

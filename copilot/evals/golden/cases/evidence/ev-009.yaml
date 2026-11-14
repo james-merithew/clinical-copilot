@@ -1,0 +1,41 @@
+id: ev-009
+category: evidence
+notes: 'Failure mode guarded: EMPTY-support fabrication. A pediatric-dosing query has no relevant doc
+  in this adult primary-care corpus, so the answer must surface NO corpus citation (guideline_evidence
+  empty, no corpus doc_id cited) and a fabricated gl handle must be quarantined by provenance — an
+  honest miss, never an invented citation.'
+input:
+  mode: chat
+  pid: 9101
+  question: What is the pediatric amoxicillin dose for acute otitis media?
+  graph_script:
+    cite_retrieved: false
+    fabricated_claims:
+    - text: Amoxicillin 90 mg/kg/day divided twice daily for acute otitis media
+      handles:
+      - gl:99
+    notes: The practice guideline corpus does not cover pediatric dosing; no supported answer.
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    allow_empty_retrieval: true
+    must_not_include_doc_ids:
+    - kdigo-ckd-2024
+    - ada-soc-glycemic
+    - acc-aha-htn-2017
+    - metformin-egfr
+    - ascvd-statin-primary
+    - acc-aha-hf-2022
+    - uspstf-screening-adults
+    - acip-adult-immunizations
+    - ada-soc-ckd-dm
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+    expected_quarantined: 1
+requires:
+- rag

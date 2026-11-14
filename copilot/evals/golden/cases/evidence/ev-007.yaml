@@ -1,0 +1,20 @@
+id: ev-007
+category: evidence
+notes: 'Failure mode guarded: preventive-screening intervals not retrieving the USPSTF doc.'
+input:
+  mode: chat
+  pid: 9101
+  question: How often should average-risk adults be screened for colorectal cancer, and at what age?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: uspstf-screening-adults
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

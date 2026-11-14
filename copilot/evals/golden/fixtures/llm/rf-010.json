@@ -1,0 +1,44 @@
+{
+  "_case": "rf-010",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {
+            "name": "glucose"
+          },
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "Glucose was 300 at the last draw",
+                "handles": [
+                  "lab:0"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

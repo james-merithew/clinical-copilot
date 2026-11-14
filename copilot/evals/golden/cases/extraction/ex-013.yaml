@@ -1,0 +1,25 @@
+id: ex-013
+category: extraction
+notes: 'Failure mode guarded: a digit-dropped VLM value passing verification by RAW SUBSTRING containment.
+  Stub VLM returns glucose=42 while the genuine quote reads "Glucose 142 H mg/dL 70-99": 42 is a substring
+  of 142 but NOT a token of the quote, so token-aligned verification must fail it and persist nothing.
+  First dedicated tripwire for the substring-not-token extraction guarantee — restoring substring containment
+  re-verifies 42 and persists a wrong clinical value at confidence 0.95.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_value:
+      field_id: cmp_glucose
+      value: '42'
+    expect_status:
+      cmp_glucose: failed_verification
+    expect_not_persisted:
+    - cmp_glucose
+requires:
+- ingest

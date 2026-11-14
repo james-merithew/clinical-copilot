@@ -1,0 +1,33 @@
+id: ex-015
+category: extraction
+notes: 'Failure mode guarded: medication-list rows failing to land in lists (type=medication) with
+  as-printed strength/route/frequency, or landing without page+quote+text-layer-bbox citations. All
+  4 medlist_simple.pdf rows must persist with their exact printed comments (BID stays BID — never
+  expanded) and full click-to-source provenance; drug names must never reach the logs.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: medlist_simple.pdf
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    require_field_citation: true
+    require_bbox_origin: text_layer
+    expected_meds:
+    - name: Metformin
+      dose: 1000 mg
+    - name: Lisinopril
+      dose: 10 mg
+    - name: Atorvastatin
+      dose: 20 mg
+    - name: Sertraline
+      dose: 100 mg
+    phi_sentinels:
+    - TESTPATIENT
+    - Sertraline
+    ground_truth_ref: medlist_simple.pdf
+requires:
+- ingest

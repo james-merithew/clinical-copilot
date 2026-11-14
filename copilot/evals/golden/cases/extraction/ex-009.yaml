@@ -1,0 +1,23 @@
+id: ex-009
+category: extraction
+notes: 'Failure mode guarded: intake medication doses drifting during extraction (the classic transcription
+  error). The three intake_simple.pdf meds must match ground truth exactly.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: intake_simple.pdf
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_meds:
+    - name: Metformin
+      dose: 1000 mg
+    - name: Lisinopril
+      dose: 10 mg
+    - name: Atorvastatin
+      dose: 20 mg
+requires:
+- ingest

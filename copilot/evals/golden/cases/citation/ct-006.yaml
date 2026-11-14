@@ -1,0 +1,22 @@
+id: ct-006
+category: citation
+notes: 'Failure mode guarded: multi-source claims dropping one of their citations. A claim grounded in
+  BOTH a prescriptions row and a lists row must surface with both refs.'
+input:
+  mode: chat
+  pid: 9101
+  question: Summarize his diabetes management.
+  transcript: ct-006.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 0
+    ground_truth_values:
+    - '1000'
+    must_cite_tables:
+    - prescriptions
+    - lists

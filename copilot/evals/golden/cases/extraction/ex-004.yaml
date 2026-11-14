@@ -1,0 +1,23 @@
+id: ex-004
+category: extraction
+notes: 'Failure mode guarded: a VLM-invented value being persisted. Stub VLM returns glucose=152 (the
+  page says 142): text-layer verification must mark it failed_verification and persist NOTHING for that
+  field.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_value:
+      field_id: cmp_glucose
+      value: '152'
+    expect_status:
+      cmp_glucose: failed_verification
+    expect_not_persisted:
+    - cmp_glucose
+requires:
+- ingest

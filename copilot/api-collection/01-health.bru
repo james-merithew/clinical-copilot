@@ -1,0 +1,21 @@
+meta {
+  name: 01 Health (liveness)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+docs {
+  Liveness probe. Returns 200 {"status":"alive"} whenever the process is up.
+  No auth, no dependency checks — this is deliberately NOT /ready.
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq alive
+}

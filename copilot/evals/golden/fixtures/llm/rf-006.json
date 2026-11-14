@@ -1,0 +1,22 @@
+{
+  "_case": "rf-006",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [],
+            "notes": "I can't recommend medication changes. Dosing decisions stay with the physician \u2014 I can only report what is documented."
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

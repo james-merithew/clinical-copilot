@@ -1,0 +1,19 @@
+id: ex-007
+category: extraction
+notes: 'Failure mode guarded: a missing field silently absent instead of surfaced as a gap. Stub VLM omits
+  a1c: the result must list a1c under gaps as not_found — never invent it.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_omit:
+    - a1c
+    expect_gap_fields:
+    - a1c
+requires:
+- ingest

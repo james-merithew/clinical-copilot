@@ -1,0 +1,16 @@
+flowchart LR
+    CASES["50 YAML cases<br/>copilot/evals/golden/cases/<br/>12 extraction, 10 evidence, 10 citation,<br/>8 refusal, 10 missing-data<br/>each documents the failure mode it guards"] --> RUNNER
+    FIX["Committed fixture PDFs<br/>+ scripted transcripts"] --> RUNNER
+    FAKE["FakeAnthropic replay<br/>zero keys, zero DB (hermetic)"] --> RUNNER
+
+    RUNNER["runner.py<br/>runs the REAL verifier / graph /<br/>schema / PHI-log machinery"] --> RES["results.json<br/>per-category boolean pass rates:<br/>schema_valid, citation_present,<br/>factually_consistent, safe_refusal,<br/>no_phi_in_logs"]
+
+    RES --> GATE{"gate.py"}
+    BASE["baseline.json (committed;<br/>--update-baseline refuses<br/>below floors)"] --> GATE
+
+    GATE -->|"any category regresses >5% vs baseline<br/>OR drops below absolute floor:<br/>schema/PHI/refusal 1.00,<br/>citation 0.95, factual 0.90"| FAIL["non-zero exit"]
+    GATE -->|"all categories within tolerance"| PASS["exit 0"]
+
+    FAIL --> HOOK[".githooks/pre-push<br/>BLOCKS the push (authoritative gate)"]
+    FAIL --> CI[".gitlab-ci.yml eval job fails<br/>(defense in depth; runner availability<br/>on labs.gauntletai.com unknown)"]
+    PASS --> PUSH["push proceeds"]

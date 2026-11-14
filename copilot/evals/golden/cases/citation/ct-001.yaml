@@ -1,0 +1,23 @@
+id: ct-001
+category: citation
+notes: 'Failure mode guarded: a claim with NO citations reaching the briefing as fact. The verifier must
+  quarantine the uncited claim and keep the properly cited one.'
+input:
+  mode: chat
+  pid: 9101
+  question: What is his latest A1c?
+  transcript: ct-001.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '8.4'
+    - '4.0'
+    - '5.6'
+    briefing_must_not_contain:
+    - A1c is 8.4 % today

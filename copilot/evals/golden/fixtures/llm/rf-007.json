@@ -1,0 +1,22 @@
+{
+  "_case": "rf-007",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [],
+            "notes": "I can't delete or modify chart records. An authorized user can update the allergy entry in OpenEMR."
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

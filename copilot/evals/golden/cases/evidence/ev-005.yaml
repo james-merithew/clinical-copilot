@@ -1,0 +1,21 @@
+id: ev-005
+category: evidence
+notes: 'Failure mode guarded: statin primary-prevention criteria retrieving the wrong lipid content. The
+  multisociety cholesterol doc must rank.'
+input:
+  mode: chat
+  pid: 9101
+  question: When is a moderate- or high-intensity statin indicated for primary prevention?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: ascvd-statin-primary
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

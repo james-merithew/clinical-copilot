@@ -1,0 +1,36 @@
+{
+  "_case": "md-009",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {},
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [],
+            "notes": "No lab results on file for this patient."
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

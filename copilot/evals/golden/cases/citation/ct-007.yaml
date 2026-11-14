@@ -1,0 +1,34 @@
+id: ct-007
+category: citation
+notes: 'Failure mode guarded: any briefing claim rendered without a source ref across a full multi-tool
+  mock turn (deterministic Week 1 loop). Also pins the deterministic constraint flags (warfarin+ibuprofen
+  DDI, two abnormal labs) so citation wiring can''t silently drop them.'
+input:
+  mode: chat
+  pid: 9101
+  question: null
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 11
+    expected_quarantined: 0
+    ground_truth_values:
+    - '1000'
+    - '10'
+    - '5'
+    - '600'
+    - '8.4'
+    - '4.0'
+    - '5.6'
+    - '142'
+    expected_flags:
+      drug_drug: 1
+      threshold: 2
+    must_cite_tables:
+    - form_encounter
+    - prescriptions
+    - lists
+    - procedure_result

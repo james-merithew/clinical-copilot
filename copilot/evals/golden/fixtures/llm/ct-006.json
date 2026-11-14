@@ -1,0 +1,49 @@
+{
+  "_case": "ct-006",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_medications",
+          "input": {},
+          "id": "tu_0"
+        },
+        {
+          "type": "tool_use",
+          "name": "get_problems_allergies",
+          "input": {},
+          "id": "tu_1"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "Metformin 1000 mg active for Type 2 diabetes mellitus",
+                "handles": [
+                  "med:0",
+                  "prob:0"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

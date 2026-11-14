@@ -1,0 +1,26 @@
+id: ct-011
+category: citation
+notes: 'Failure mode guarded: a fabricated BARE-INTEGER lab value (no unit, no decimal) laundered into
+  the briefing because value-grounding skipped it. "Glucose was 300" cites the real glucose row (142)
+  but 300 is not in that evidence; the verifier must quarantine it. Second dedicated tripwire for the
+  bare-integer value-grounding guarantee (paired with rf-010): if value grounding goes vacuous, 300 verifies
+  and quarantined drops to 0.'
+input:
+  mode: chat
+  pid: 9101
+  question: What was his glucose?
+  transcript: ct-011.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '142'
+    - '70'
+    - '99'
+    briefing_must_not_contain:
+    - Glucose was 300

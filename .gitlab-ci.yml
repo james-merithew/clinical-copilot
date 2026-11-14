@@ -1,0 +1,64 @@
+# Clinical Co-Pilot — CI pipeline (Week 2, D6/D6b).
+#
+# Defense in depth BEHIND the authoritative gate: runner availability on the
+# labs.gauntletai.com GitLab is unknown, so the pre-push hook
+# (.githooks/pre-push, installed via scripts/install-hooks.*) is the
+# authoritative, demonstrable PR-blocking gate. If runners exist, this pipeline
+# fires too and adds the network-dependent audits (pip-audit, bandit) that
+# deliberately stay OUT of the fast offline hook (W2_ARCHITECTURE.md §8.5, §9.4).
+#
+# The eval job is hermetic: zero API keys, zero MariaDB — fixtures and scripted
+# transcripts only. No secrets are required by this pipeline.
+
+stages:
+  - eval
+  - package
+
+eval:
+  stage: eval
+  image: python:3.12-slim
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  before_script:
+    - python -m pip install --quiet -r copilot/requirements.txt
+  script:
+    # Same steps, same order as the pre-push hook (authoritative gate):
+    - python -m ruff check copilot/app
+    - python -m pytest copilot/tests -q
+    # named PHI-detection check (invariant #8): fail closed if any PHI reaches a
+    # runtime log or a committed observability artifact
+    - python copilot/scripts/phi_scan.py
+    - python copilot/evals/golden/runner.py --mode hermetic --out copilot/evals/golden/results.json
+    - python copilot/evals/golden/gate.py --results copilot/evals/golden/results.json --baseline copilot/evals/golden/baseline.json --out-md copilot/evals/golden/gate-report.md
+    # CI-only breadth (network-y / slower; not in the developer inner loop).
+    # Single source of truth for the dependency + static audit — the SAME script a
+    # developer or pre-push (COPILOT_SECURITY_AUDIT=1) runs, so the scan exists even
+    # on a runner-less GitLab. pip-audit (CVE scan) + bandit (static, medium/medium).
+    - PYTHON=python sh copilot/scripts/security_audit.sh
+  artifacts:
+    when: always
+    paths:
+      - copilot/evals/golden/results.json
+      - copilot/evals/golden/gate-report.md
+    expire_in: 30 days
+
+# Packaging guard — proves the SUBMISSION EXPORT is self-sufficient.
+# The eval job above runs from a clone, which never honors `.gitattributes
+# export-ignore`; a clean "Download ZIP" / tarball does. OpenEMR's inherited
+# rules mark tests/ + tools/ export-ignore, which (without our carve-outs) strip
+# copilot/app/tools, copilot/tests, and redteam/tests -> a clean eval run fails
+# importing app.tools.* before the gate (the Week-2-final packaging bug). This
+# job reproduces that clean export and runs both gates from it, so any future
+# regression of the carve-outs fails CI.
+clean-archive:
+  stage: package
+  image: python:3.12-slim
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git tar
+    - python -m pip install --quiet -r copilot/requirements.txt
+  script:
+    - PYTHON=python sh scripts/verify_clean_archive.sh

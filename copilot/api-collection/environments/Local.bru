@@ -1,0 +1,13 @@
+vars {
+  baseUrl: http://127.0.0.1:8808
+  token: 
+  documentId: 1
+}
+
+docs {
+  Auth is now a short-lived OpenEMR-minted session token, NOT the old reusable
+  bearer (revoked). Run "00 Mint dev token" FIRST — it hits /dev/token and sets
+  {{token}}. That endpoint requires the sidecar running locally with
+  COPILOT_AUTH_DEV_MODE=true (dev only; it is 404 in production). Against a real
+  deployment, paste a token from the OpenEMR Co-Pilot panel into {{token}}.
+}

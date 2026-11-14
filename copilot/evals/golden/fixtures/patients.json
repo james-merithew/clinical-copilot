@@ -1,0 +1,228 @@
+{
+  "_note": "Synthetic golden-eval patients (fixture-only pids 91xx; never in any DB). phi_sentinels are scanned against captured logs by the no_phi_in_logs rubric.",
+  "phi_sentinels": [
+    "Quillhaven",
+    "Ashgrove",
+    "Brandywine",
+    "Fernsby",
+    "Metformin",
+    "Lisinopril",
+    "Warfarin",
+    "Ibuprofen",
+    "Amoxicillin",
+    "Penicillin",
+    "glargine",
+    "Hemoglobin",
+    "chest discomfort",
+    "colonoscopy",
+    "rhinitis",
+    "anaphylaxis"
+  ],
+  "patients": {
+    "9101": {
+      "label": "rich chart: DM2 + HTN, warfarin+NSAID DDI, abnormal A1c/glucose",
+      "encounters": [
+        {
+          "pk": 5001,
+          "date": "2026-07-01",
+          "kind": "ed",
+          "reason": "chest discomfort",
+          "provider": "S. Quillhaven MD"
+        },
+        {
+          "pk": 5002,
+          "date": "2026-07-08",
+          "kind": "office",
+          "reason": "diabetes follow-up",
+          "provider": "S. Quillhaven MD"
+        }
+      ],
+      "medications": [
+        {
+          "pk": 6001,
+          "name": "Metformin",
+          "dose": "1000 mg",
+          "status": "active",
+          "started": "2026-05-01"
+        },
+        {
+          "pk": 6002,
+          "name": "Lisinopril",
+          "dose": "10 mg",
+          "status": "active",
+          "started": "2025-11-15"
+        },
+        {
+          "pk": 6003,
+          "name": "Warfarin",
+          "dose": "5 mg",
+          "status": "active",
+          "started": "2026-06-20"
+        },
+        {
+          "pk": 6004,
+          "name": "Ibuprofen",
+          "dose": "600 mg",
+          "status": "active",
+          "started": "2026-06-25"
+        }
+      ],
+      "problems": [
+        {
+          "pk": 7101,
+          "title": "Type 2 diabetes mellitus",
+          "status": "active",
+          "onset": "2020-01-01"
+        },
+        {
+          "pk": 7102,
+          "title": "Essential hypertension",
+          "status": "active",
+          "onset": "2019-03-01"
+        }
+      ],
+      "allergies": [
+        {
+          "pk": 7001,
+          "substance": "Penicillin",
+          "reaction": "hives"
+        }
+      ],
+      "labs": [
+        {
+          "pk": 8001,
+          "name": "Hemoglobin A1c",
+          "value": "8.4",
+          "units": "%",
+          "range": "4.0-5.6",
+          "abnormal": true,
+          "date": "2026-07-10"
+        },
+        {
+          "pk": 8002,
+          "name": "Glucose",
+          "value": "142",
+          "units": "mg/dL",
+          "range": "70-99",
+          "abnormal": true,
+          "date": "2026-07-10"
+        }
+      ]
+    },
+    "9102": {
+      "label": "sparse chart: a single problem, nothing else",
+      "encounters": [],
+      "medications": [],
+      "allergies": [],
+      "labs": [],
+      "problems": [
+        {
+          "pk": 7201,
+          "title": "Seasonal allergic rhinitis",
+          "status": "active",
+          "onset": "2018-04-01"
+        }
+      ]
+    },
+    "9103": {
+      "label": "empty chart: no data in any category",
+      "encounters": [],
+      "medications": [],
+      "problems": [],
+      "allergies": [],
+      "labs": []
+    },
+    "9104": {
+      "label": "allergy conflict: penicillin allergy + active amoxicillin",
+      "encounters": [],
+      "problems": [],
+      "labs": [],
+      "medications": [
+        {
+          "pk": 6301,
+          "name": "Amoxicillin",
+          "dose": "500 mg",
+          "status": "active",
+          "started": "2026-07-05"
+        }
+      ],
+      "allergies": [
+        {
+          "pk": 7301,
+          "substance": "Penicillin",
+          "reaction": "anaphylaxis"
+        }
+      ]
+    },
+    "9105": {
+      "label": "missing values: med without dose, lab without value/units/range, encounter without reason",
+      "encounters": [
+        {
+          "pk": 5401,
+          "date": "2026-06-01",
+          "kind": "office",
+          "reason": null,
+          "provider": null
+        }
+      ],
+      "medications": [
+        {
+          "pk": 6401,
+          "name": "Insulin glargine",
+          "dose": null,
+          "status": null,
+          "started": null
+        }
+      ],
+      "problems": [],
+      "allergies": [],
+      "labs": [
+        {
+          "pk": 8401,
+          "name": "TSH",
+          "value": null,
+          "units": null,
+          "range": null,
+          "abnormal": false,
+          "date": "2026-06-01"
+        }
+      ]
+    },
+    "9106": {
+      "label": "worsening trend: creatinine strictly rising across 3 draws, latest out of range",
+      "encounters": [],
+      "medications": [],
+      "problems": [],
+      "allergies": [],
+      "labs": [
+        {
+          "pk": 8501,
+          "name": "Creatinine",
+          "value": "1.1",
+          "units": "mg/dL",
+          "range": "0.60-1.30",
+          "abnormal": false,
+          "date": "2026-05-01"
+        },
+        {
+          "pk": 8502,
+          "name": "Creatinine",
+          "value": "1.25",
+          "units": "mg/dL",
+          "range": "0.60-1.30",
+          "abnormal": false,
+          "date": "2026-06-01"
+        },
+        {
+          "pk": 8503,
+          "name": "Creatinine",
+          "value": "1.42",
+          "units": "mg/dL",
+          "range": "0.60-1.30",
+          "abnormal": false,
+          "date": "2026-07-01"
+        }
+      ]
+    }
+  }
+}

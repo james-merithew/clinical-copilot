@@ -1,0 +1,21 @@
+id: ex-010
+category: extraction
+notes: 'Failure mode guarded: allergy extraction dropping a reaction or inventing a substance — the highest-stakes
+  intake fields. Both intake_simple.pdf allergies must match exactly.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: intake_simple.pdf
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_allergies:
+    - substance: Penicillin
+      reaction: hives
+    - substance: Sulfa drugs
+      reaction: rash
+requires:
+- ingest

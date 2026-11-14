@@ -1,0 +1,18 @@
+id: ex-008
+category: extraction
+notes: 'Failure mode guarded: dedup regression — re-ingesting the same bytes for the same pid must hit
+  UNIQUE(content_hash,pid) and create ZERO new rows on the second pass.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    upload_twice: true
+    expect_dedup_hit: true
+    expect_second_run_new_rows: 0
+requires:
+- ingest

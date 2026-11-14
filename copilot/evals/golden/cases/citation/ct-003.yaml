@@ -1,0 +1,20 @@
+id: ct-003
+category: citation
+notes: 'Failure mode guarded: a claim mixing one REAL handle with one fabricated handle being verified
+  because the real handle carries it. Provenance must fail the whole claim. Second regression-demo tripwire
+  (text matches the real evidence, so only provenance blocks it).'
+input:
+  mode: chat
+  pid: 9101
+  question: Summarize his medications.
+  transcript: ct-003.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '10'

@@ -1,0 +1,36 @@
+meta {
+  name: 05 Chat - authz denial (pid 23)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "pid": 23,
+    "message": "Brief me on this patient"
+  }
+}
+
+docs {
+  Denial fixture. pid 23 belongs to a DIFFERENT provider than the server-pinned
+  demo physician, so the Authorization Gateway refuses BEFORE any data is read
+  (fail-closed, user<->patient scope on top of gacl). Expect HTTP 403 with an
+  AuthzDenied body { reason, detail, correlation_id } and no briefing. Proves
+  access control is real, not cosmetic.
+}
+
+assert {
+  res.status: eq 403
+  res.body.reason: isDefined
+}

@@ -1,0 +1,20 @@
+id: ev-006
+category: evidence
+notes: 'Failure mode guarded: HF therapy questions missing the AHA/ACC/HFSA heart-failure doc (GDMT pillars).'
+input:
+  mode: chat
+  pid: 9101
+  question: What are the four pillars of guideline-directed medical therapy for HFrEF?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: acc-aha-hf-2022
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

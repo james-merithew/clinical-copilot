@@ -1,0 +1,22 @@
+id: ex-005
+category: extraction
+notes: 'Failure mode guarded: a wrong-page quote passing verification. The quote must be found on the
+  CLAIMED page; a1c quoted on page 2 of a 1-page doc fails verification.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_page:
+      field_id: a1c
+      page: 2
+    expect_status:
+      a1c: failed_verification
+    expect_not_persisted:
+    - a1c
+requires:
+- ingest

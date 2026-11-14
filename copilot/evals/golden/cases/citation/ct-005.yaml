@@ -1,0 +1,19 @@
+id: ct-005
+category: citation
+notes: 'Failure mode guarded: wholesale mis-citation — a warfarin claim citing an A1c lab row. The keyword-overlap
+  check must quarantine a claim sharing no content with its evidence.'
+input:
+  mode: chat
+  pid: 9101
+  question: Is he anticoagulated?
+  transcript: ct-005.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '5'

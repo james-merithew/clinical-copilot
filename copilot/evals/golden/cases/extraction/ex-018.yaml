@@ -1,0 +1,36 @@
+id: ex-018
+category: extraction
+notes: 'Failure mode guarded: re-uploading the same medication list silently duplicating the
+  patient''s med rows in lists (double meds would corrupt reconciliation). Second upload of
+  demo_medlist_delgado.pdf for pid 101 must return an explicit dedup notice
+  (UNIQUE(content_hash, pid)) with ZERO new rows across every ingest table; the Discontinued and
+  missing-frequency rows also ride this fixture, so the first pass must persist all 5 rows.'
+input:
+  mode: extract
+  pid: 101
+  fixture_doc: demo_medlist_delgado.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    upload_twice: true
+    expect_dedup_hit: true
+    expect_second_run_new_rows: 0
+    expected_meds:
+    - name: Metformin
+      dose: 1000 mg
+    - name: Lisinopril
+      dose: 10 mg
+    - name: Atorvastatin
+      dose: 40 mg
+    - name: Glipizide
+      dose: 5 mg
+    - name: Aspirin
+      dose: 81 mg
+    phi_sentinels:
+    - DELGADO
+    - Glipizide
+    ground_truth_ref: demo_medlist_delgado.pdf
+requires:
+- ingest

@@ -1,0 +1,465 @@
+{
+  "meta": {
+    "mode_claimed": "live",
+    "mode_observed": "live",
+    "mode_mismatch": false,
+    "date": "2026-07-16 14:36:07",
+    "url": "http://127.0.0.1:8811",
+    "git_sha": "d2a0d38188e7af8db5df04457e9478552ed43b1a",
+    "min_interval_s": 2.1,
+    "n_per_flow": {
+      "ready": 20,
+      "snapshot": 20,
+      "day": 20,
+      "chat_message": 10,
+      "chat_chip_care_gaps": 10,
+      "ingest": 3
+    }
+  },
+  "flows": [
+    {
+      "name": "ready",
+      "skipped": false,
+      "note": null,
+      "n": 20,
+      "ok": 20,
+      "excluded": 0,
+      "p50_ms": 1514.0366999985417,
+      "p95_ms": 1716.6133999999147,
+      "p99_ms": 1716.8923000135692,
+      "min_ms": 1298.011500010034,
+      "max_ms": 1716.8923000135692,
+      "mean_ms": 1519.170215001941,
+      "status_counts": {
+        "200": 20
+      }
+    },
+    {
+      "name": "snapshot",
+      "skipped": false,
+      "note": null,
+      "n": 20,
+      "ok": 20,
+      "excluded": 0,
+      "p50_ms": 719.9929000053089,
+      "p95_ms": 841.5646999928867,
+      "p99_ms": 1186.0326000023633,
+      "min_ms": 578.5361000016565,
+      "max_ms": 1186.0326000023633,
+      "mean_ms": 726.0051949982881,
+      "status_counts": {
+        "200": 20
+      }
+    },
+    {
+      "name": "day",
+      "skipped": false,
+      "note": null,
+      "n": 20,
+      "ok": 20,
+      "excluded": 0,
+      "p50_ms": 1023.3106000086991,
+      "p95_ms": 1326.5084000013303,
+      "p99_ms": 1335.9782000043197,
+      "min_ms": 810.3654000005918,
+      "max_ms": 1335.9782000043197,
+      "mean_ms": 1043.7757200015767,
+      "status_counts": {
+        "200": 20
+      }
+    },
+    {
+      "name": "chat_message",
+      "skipped": false,
+      "note": null,
+      "n": 10,
+      "ok": 10,
+      "excluded": 0,
+      "p50_ms": 24821.04939999408,
+      "p95_ms": 38792.29560001113,
+      "p99_ms": 38792.29560001113,
+      "min_ms": 20905.748799996218,
+      "max_ms": 38792.29560001113,
+      "mean_ms": 26593.92026000278,
+      "status_counts": {
+        "200": 10
+      }
+    },
+    {
+      "name": "chat_chip_care_gaps",
+      "skipped": false,
+      "note": null,
+      "n": 10,
+      "ok": 10,
+      "excluded": 0,
+      "p50_ms": 28316.17580000602,
+      "p95_ms": 38588.42379999987,
+      "p99_ms": 38588.42379999987,
+      "min_ms": 21603.48590000649,
+      "max_ms": 38588.42379999987,
+      "mean_ms": 27814.262600000075,
+      "status_counts": {
+        "200": 10
+      }
+    },
+    {
+      "name": "ingest",
+      "skipped": false,
+      "note": null,
+      "n": 3,
+      "ok": 3,
+      "excluded": 0,
+      "p50_ms": 530.6793000054313,
+      "p95_ms": 10123.882799991407,
+      "p99_ms": 10123.882799991407,
+      "min_ms": 500.7707000040682,
+      "max_ms": 10123.882799991407,
+      "mean_ms": 3718.444266666969,
+      "status_counts": {
+        "200": 3
+      }
+    }
+  ],
+  "analysis": [
+    "Graph-node p95 ranking (server-side): answerer 21966.1ms, intake_extractor 15043.9ms, supervisor 4657.5ms, critic 0.3ms",
+    "Bottleneck: answerer p95 21966.1ms is 69% of turn p95 31613.7ms -> the LLM dominates the turn.",
+    "POST /chat wall-clock p95 38792.3ms vs turns.p95 31613.7ms -> ~+7178.6ms outside the graph (middleware/serialization/HTTP; a negative gap reflects the sliding-window scope of the server counters).",
+    "/snapshot (no-LLM, app+DB only) p95 841.6ms vs /chat p95 38792.3ms -> ~37950.7ms is the LLM/graph share of a chat turn.",
+    "Saturation/throughput is NOT re-measured here \u2014 see copilot/load/RESULTS.md (k6 + load.py record: single-worker plateau ~4 req/s)."
+  ],
+  "summary_before": {
+    "generated_ts": "2026-07-16T14:22:52",
+    "uptime_s": 43.4,
+    "endpoints": {
+      "GET /": {
+        "count": 2,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 2.5,
+        "p50_ms": 1.2,
+        "p95_ms": 3.8
+      },
+      "GET /dev/token": {
+        "count": 2,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 60.9,
+        "p50_ms": 1.4,
+        "p95_ms": 120.5
+      },
+      "GET /ready": {
+        "count": 1,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 3074.6,
+        "p50_ms": 3074.6,
+        "p95_ms": 3074.6
+      },
+      "GET /snapshot": {
+        "count": 1,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 1685.6,
+        "p50_ms": 1685.6,
+        "p95_ms": 1685.6
+      },
+      "GET <unmatched>": {
+        "count": 2,
+        "errors_4xx": 2,
+        "errors_5xx": 0,
+        "avg_ms": 0.5,
+        "p50_ms": 0.4,
+        "p95_ms": 0.5
+      },
+      "HEAD /": {
+        "count": 1,
+        "errors_4xx": 1,
+        "errors_5xx": 0,
+        "avg_ms": 0.7,
+        "p50_ms": 0.7,
+        "p95_ms": 0.7
+      }
+    },
+    "turns": {
+      "count": 1,
+      "errors": 0,
+      "degraded": 0,
+      "verified_claims": 0,
+      "quarantined_claims": 0,
+      "by_kind": {
+        "snapshot": 1
+      },
+      "avg_ms": 39.5,
+      "p50_ms": 39.5,
+      "p95_ms": 39.5
+    },
+    "nodes": {},
+    "routing": {},
+    "ingestion": {
+      "count": 0,
+      "persisted": 0,
+      "deduplicated": 0,
+      "needs_review": 0,
+      "failed": 0,
+      "fields_total": 0,
+      "fields_extracted": 0,
+      "fields_failed_verification": 0,
+      "field_pass_rate": null
+    },
+    "retrieval": {
+      "queries": 0,
+      "hits": 0,
+      "degraded": 0,
+      "rewritten": 0,
+      "hit_rate": null
+    },
+    "evals": {
+      "ts": "2026-07-16T14:16:02",
+      "git_sha": "4596888f9635256673dc8dca832e97d061706134",
+      "mode": "hermetic",
+      "per_category": {
+        "schema_valid": {
+          "n": 65,
+          "passed": 65,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "citation_present": {
+          "n": 36,
+          "passed": 36,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "factually_consistent": {
+          "n": 52,
+          "passed": 52,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "safe_refusal": {
+          "n": 12,
+          "passed": 12,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "no_phi_in_logs": {
+          "n": 65,
+          "passed": 65,
+          "rate": 1.0,
+          "skipped": 0
+        }
+      },
+      "overall": {
+        "total": 65,
+        "active": 65,
+        "passed": 65,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "rate": 1.0
+      }
+    }
+  },
+  "summary_after": {
+    "generated_ts": "2026-07-16T14:36:07",
+    "uptime_s": 838.7,
+    "endpoints": {
+      "GET /": {
+        "count": 2,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 2.5,
+        "p50_ms": 1.2,
+        "p95_ms": 3.8
+      },
+      "GET /day": {
+        "count": 20,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 1041.9,
+        "p50_ms": 1021.9,
+        "p95_ms": 1323.7
+      },
+      "GET /dev/token": {
+        "count": 2,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 60.9,
+        "p50_ms": 1.4,
+        "p95_ms": 120.5
+      },
+      "GET /metrics/summary": {
+        "count": 1,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 2.3,
+        "p50_ms": 2.3,
+        "p95_ms": 2.3
+      },
+      "GET /ready": {
+        "count": 21,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 1591.7,
+        "p50_ms": 1550.7,
+        "p95_ms": 1715.6
+      },
+      "GET /snapshot": {
+        "count": 21,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 770.1,
+        "p50_ms": 730.6,
+        "p95_ms": 1184.5
+      },
+      "GET <unmatched>": {
+        "count": 2,
+        "errors_4xx": 2,
+        "errors_5xx": 0,
+        "avg_ms": 0.5,
+        "p50_ms": 0.4,
+        "p95_ms": 0.5
+      },
+      "HEAD /": {
+        "count": 1,
+        "errors_4xx": 1,
+        "errors_5xx": 0,
+        "avg_ms": 0.7,
+        "p50_ms": 0.7,
+        "p95_ms": 0.7
+      },
+      "POST /chat": {
+        "count": 20,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 27202.3,
+        "p50_ms": 27159.2,
+        "p95_ms": 38586.4
+      },
+      "POST /ingest": {
+        "count": 3,
+        "errors_4xx": 0,
+        "errors_5xx": 0,
+        "avg_ms": 3716.5,
+        "p50_ms": 528.9,
+        "p95_ms": 10121.5
+      }
+    },
+    "turns": {
+      "count": 64,
+      "errors": 10,
+      "degraded": 16,
+      "verified_claims": 28,
+      "quarantined_claims": 8,
+      "by_kind": {
+        "snapshot": 21,
+        "day": 20,
+        "message": 10,
+        "chip": 10,
+        "ingest": 3
+      },
+      "avg_ms": 8567.7,
+      "p50_ms": 283.4,
+      "p95_ms": 31613.7
+    },
+    "nodes": {
+      "answerer": {
+        "count": 20,
+        "avg_ms": 11589.6,
+        "p50_ms": 11028.5,
+        "p95_ms": 21966.1
+      },
+      "critic": {
+        "count": 20,
+        "avg_ms": 0.1,
+        "p50_ms": 0.1,
+        "p95_ms": 0.3
+      },
+      "intake_extractor": {
+        "count": 20,
+        "avg_ms": 11288.5,
+        "p50_ms": 11321.6,
+        "p95_ms": 15043.9
+      },
+      "supervisor": {
+        "count": 20,
+        "avg_ms": 3447.3,
+        "p50_ms": 3536.2,
+        "p95_ms": 4657.5
+      }
+    },
+    "routing": {
+      "critic_passed": 19,
+      "critic_rejected": 1,
+      "critique": 20,
+      "finalize": 10,
+      "forced_finalize": 10,
+      "route_to_intake_extractor": 20,
+      "worker_return": 20
+    },
+    "ingestion": {
+      "count": 3,
+      "persisted": 1,
+      "deduplicated": 2,
+      "needs_review": 0,
+      "failed": 0,
+      "fields_total": 57,
+      "fields_extracted": 57,
+      "fields_failed_verification": 0,
+      "field_pass_rate": 1.0
+    },
+    "retrieval": {
+      "queries": 52,
+      "hits": 52,
+      "degraded": 2,
+      "rewritten": 29,
+      "hit_rate": 1.0
+    },
+    "evals": {
+      "ts": "2026-07-16T14:16:02",
+      "git_sha": "4596888f9635256673dc8dca832e97d061706134",
+      "mode": "hermetic",
+      "per_category": {
+        "schema_valid": {
+          "n": 65,
+          "passed": 65,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "citation_present": {
+          "n": 36,
+          "passed": 36,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "factually_consistent": {
+          "n": 52,
+          "passed": 52,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "safe_refusal": {
+          "n": 12,
+          "passed": 12,
+          "rate": 1.0,
+          "skipped": 0
+        },
+        "no_phi_in_logs": {
+          "n": 65,
+          "passed": 65,
+          "rate": 1.0,
+          "skipped": 0
+        }
+      },
+      "overall": {
+        "total": 65,
+        "active": 65,
+        "passed": 65,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "rate": 1.0
+      }
+    }
+  }
+}

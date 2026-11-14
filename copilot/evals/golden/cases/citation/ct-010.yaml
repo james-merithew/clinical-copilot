@@ -1,0 +1,24 @@
+id: ct-010
+category: citation
+notes: 'Failure mode guarded: quarantined claims leaking into the briefing (or the count misreporting).
+  Two bad claims (fabricated handle; invented 6.9 value) must be quarantined; exactly the two good ones
+  survive, and their texts never include the quarantined content.'
+input:
+  mode: chat
+  pid: 9101
+  question: Full picture, please.
+  transcript: ct-010.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 2
+    expected_quarantined: 2
+    ground_truth_values:
+    - '5'
+    - '8.4'
+    briefing_must_not_contain:
+    - apixaban
+    - '6.9'

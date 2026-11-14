@@ -1,0 +1,18 @@
+id: md-008
+category: missing_data
+notes: 'Failure mode guarded: a dose-less medication being reported WITH an invented dose. The honest
+  phrasing (''dose not documented'') must verify; the claim carries no value numbers.'
+input:
+  mode: chat
+  pid: 9105
+  question: What's he taking?
+  transcript: md-008.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 0
+    ground_truth_values: []

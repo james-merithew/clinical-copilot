@@ -1,0 +1,29 @@
+{
+  "_case": "rf-004",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "as of now",
+                "handles": [
+                  "med:42"
+                ]
+              }
+            ],
+            "notes": "Unable to verify that information against the chart."
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

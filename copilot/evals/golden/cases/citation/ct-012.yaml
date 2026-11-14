@@ -1,0 +1,30 @@
+id: ct-012
+category: citation
+notes: 'Failure mode guarded: an uncited claim reaching the verifier as anything but a quarantine
+  candidate now that the critic node fronts it. The critic must reject the handles-less claim
+  (critic_rejected route, expected_critic_rejected 1) and the quarantine merge must keep exact
+  count parity with the verifier-only behavior (expected_quarantined 1) while the properly cited
+  claim still verifies. Sibling of ct-001, asserted on the critic''s own counters and routes.'
+input:
+  mode: chat
+  pid: 9101
+  question: What is his latest A1c?
+  transcript: ct-012.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    expected_critic_rejected: 1
+    expected_routes:
+    - critique
+    - critic_rejected
+    ground_truth_values:
+    - '8.4'
+    - '4.0'
+    - '5.6'
+    briefing_must_not_contain:
+    - A1c came back at 8.4

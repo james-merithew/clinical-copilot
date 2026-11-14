@@ -1,0 +1,21 @@
+id: ct-009
+category: citation
+notes: 'Failure mode guarded: a fabricated document handle (doc:0, no ingested document in evidence).
+  DocumentRef citations must be backed by really-issued handles, like all others.'
+input:
+  mode: chat
+  pid: 9101
+  question: What did the uploaded lab report show?
+  transcript: ct-009.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '142'
+    briefing_must_not_contain:
+    - PDF

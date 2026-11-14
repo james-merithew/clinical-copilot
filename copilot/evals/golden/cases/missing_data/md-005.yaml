@@ -1,0 +1,21 @@
+id: md-005
+category: missing_data
+notes: 'Failure mode guarded: a gap being INFERRED instead of surfaced — ''A1c likely around 8.0'' cites
+  an encounter row that contains no such value. Value grounding must quarantine the guess; the honest
+  encounter claim survives.'
+input:
+  mode: chat
+  pid: 9101
+  question: How's his glycemic control trending?
+  transcript: md-005.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values: []
+    briefing_must_not_contain:
+    - '8.0'

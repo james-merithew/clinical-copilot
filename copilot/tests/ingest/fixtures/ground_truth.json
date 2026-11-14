@@ -1,0 +1,574 @@
+{
+  "_note": "Synthetic fixtures for Week-2 ingestion golden extraction. Fictional patients only. Values are the exact strings a correct extractor must return.",
+  "lab_simple.pdf": {
+    "doc_type": "lab_report",
+    "has_text_layer": true,
+    "patient_name": "TESTPATIENT, ALPHA",
+    "dob": "1970-01-01",
+    "specimen_id": "742-118-4460-0",
+    "date_collected": "2026-07-10",
+    "date_received": "2026-07-10",
+    "date_reported": "2026-07-11",
+    "ordering_provider": "CHEN, SARAH, MD",
+    "abnormal_flags_expected": [
+      "cmp_glucose",
+      "a1c"
+    ],
+    "analytes": [
+      {
+        "field_id": "cmp_glucose",
+        "test_name": "Glucose",
+        "value": "142",
+        "unit": "mg/dL",
+        "reference_range": "70-99",
+        "abnormal_flag": "H",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_bun",
+        "test_name": "Urea Nitrogen (BUN)",
+        "value": "15",
+        "unit": "mg/dL",
+        "reference_range": "7-20",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_creatinine",
+        "test_name": "Creatinine",
+        "value": "0.9",
+        "unit": "mg/dL",
+        "reference_range": "0.60-1.30",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_egfr",
+        "test_name": "eGFR",
+        "value": "95",
+        "unit": "mL/min/1.73",
+        "reference_range": ">=60",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_sodium",
+        "test_name": "Sodium",
+        "value": "139",
+        "unit": "mmol/L",
+        "reference_range": "135-145",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_potassium",
+        "test_name": "Potassium",
+        "value": "4.2",
+        "unit": "mmol/L",
+        "reference_range": "3.5-5.1",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_chloride",
+        "test_name": "Chloride",
+        "value": "102",
+        "unit": "mmol/L",
+        "reference_range": "98-107",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_co2",
+        "test_name": "Carbon Dioxide (CO2)",
+        "value": "26",
+        "unit": "mmol/L",
+        "reference_range": "22-29",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_calcium",
+        "test_name": "Calcium",
+        "value": "9.4",
+        "unit": "mg/dL",
+        "reference_range": "8.6-10.2",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "a1c",
+        "test_name": "Hemoglobin A1c",
+        "value": "8.4",
+        "unit": "%",
+        "reference_range": "4.0-5.6",
+        "abnormal_flag": "H",
+        "page": 1
+      }
+    ]
+  },
+  "intake_simple.pdf": {
+    "doc_type": "intake_form",
+    "has_text_layer": true,
+    "demographics": {
+      "patient_name": "TESTPATIENT, ALPHA",
+      "dob": "1970-01-01",
+      "sex": "M",
+      "page": 1
+    },
+    "chief_concern": {
+      "value": "increased thirst and fatigue",
+      "page": 1
+    },
+    "medications": [
+      {
+        "field_id": "med_1",
+        "name": "Metformin",
+        "dose": "1000 mg",
+        "frequency": "twice daily",
+        "page": 1
+      },
+      {
+        "field_id": "med_2",
+        "name": "Lisinopril",
+        "dose": "10 mg",
+        "frequency": "once daily",
+        "page": 1
+      },
+      {
+        "field_id": "med_3",
+        "name": "Atorvastatin",
+        "dose": "20 mg",
+        "frequency": "once daily at bedtime",
+        "page": 1
+      }
+    ],
+    "allergies": [
+      {
+        "field_id": "allergy_1",
+        "substance": "Penicillin",
+        "reaction": "hives",
+        "page": 1
+      },
+      {
+        "field_id": "allergy_2",
+        "substance": "Sulfa drugs",
+        "reaction": "rash",
+        "page": 1
+      }
+    ],
+    "family_history": [
+      {
+        "field_id": "fh_father",
+        "relation": "Father",
+        "condition": "Type 2 diabetes mellitus",
+        "page": 1
+      },
+      {
+        "field_id": "fh_mother",
+        "relation": "Mother",
+        "condition": "Hypertension",
+        "page": 1
+      }
+    ]
+  },
+  "lab_scanned.pdf": {
+    "doc_type": "lab_report",
+    "has_text_layer": false,
+    "note": "Image-only render of the lab_simple content. Extractor must return needs_review (no text-layer verification possible); values below describe the depicted content.",
+    "patient_name": "TESTPATIENT, ALPHA",
+    "date_collected": "2026-07-10",
+    "abnormal_flags_expected": [
+      "cmp_glucose",
+      "a1c"
+    ],
+    "analytes": [
+      {
+        "field_id": "cmp_glucose",
+        "test_name": "Glucose",
+        "value": "142",
+        "unit": "mg/dL",
+        "reference_range": "70-99",
+        "abnormal_flag": "H",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_bun",
+        "test_name": "Urea Nitrogen (BUN)",
+        "value": "15",
+        "unit": "mg/dL",
+        "reference_range": "7-20",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_creatinine",
+        "test_name": "Creatinine",
+        "value": "0.9",
+        "unit": "mg/dL",
+        "reference_range": "0.60-1.30",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_egfr",
+        "test_name": "eGFR",
+        "value": "95",
+        "unit": "mL/min/1.73",
+        "reference_range": ">=60",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_sodium",
+        "test_name": "Sodium",
+        "value": "139",
+        "unit": "mmol/L",
+        "reference_range": "135-145",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_potassium",
+        "test_name": "Potassium",
+        "value": "4.2",
+        "unit": "mmol/L",
+        "reference_range": "3.5-5.1",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_chloride",
+        "test_name": "Chloride",
+        "value": "102",
+        "unit": "mmol/L",
+        "reference_range": "98-107",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_co2",
+        "test_name": "Carbon Dioxide (CO2)",
+        "value": "26",
+        "unit": "mmol/L",
+        "reference_range": "22-29",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_calcium",
+        "test_name": "Calcium",
+        "value": "9.4",
+        "unit": "mg/dL",
+        "reference_range": "8.6-10.2",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "a1c",
+        "test_name": "Hemoglobin A1c",
+        "value": "8.4",
+        "unit": "%",
+        "reference_range": "4.0-5.6",
+        "abnormal_flag": "H",
+        "page": 1
+      }
+    ]
+  },
+  "demo_lab_delgado.pdf": {
+    "doc_type": "lab_report",
+    "has_text_layer": true,
+    "pid": 101,
+    "patient_name": "DELGADO, MARCUS",
+    "dob": "1961-04-12",
+    "specimen_id": "553-204-7788-0",
+    "date_collected": "2026-07-12",
+    "date_received": "2026-07-12",
+    "date_reported": "2026-07-13",
+    "ordering_provider": "CHEN, SARAH, MD",
+    "abnormal_flags_expected": [
+      "cmp_glucose",
+      "cmp_bun",
+      "cmp_creatinine",
+      "cmp_egfr",
+      "a1c",
+      "urine_acr"
+    ],
+    "analytes": [
+      {
+        "field_id": "cmp_glucose",
+        "test_name": "Glucose",
+        "value": "168",
+        "unit": "mg/dL",
+        "reference_range": "70-99",
+        "abnormal_flag": "H",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_bun",
+        "test_name": "Urea Nitrogen (BUN)",
+        "value": "22",
+        "unit": "mg/dL",
+        "reference_range": "7-20",
+        "abnormal_flag": "H",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_creatinine",
+        "test_name": "Creatinine",
+        "value": "1.42",
+        "unit": "mg/dL",
+        "reference_range": "0.60-1.30",
+        "abnormal_flag": "H",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_egfr",
+        "test_name": "eGFR",
+        "value": "58",
+        "unit": "mL/min/1.73",
+        "reference_range": ">=60",
+        "abnormal_flag": "L",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_sodium",
+        "test_name": "Sodium",
+        "value": "140",
+        "unit": "mmol/L",
+        "reference_range": "135-145",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_potassium",
+        "test_name": "Potassium",
+        "value": "4.6",
+        "unit": "mmol/L",
+        "reference_range": "3.5-5.1",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_chloride",
+        "test_name": "Chloride",
+        "value": "104",
+        "unit": "mmol/L",
+        "reference_range": "98-107",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_co2",
+        "test_name": "Carbon Dioxide (CO2)",
+        "value": "24",
+        "unit": "mmol/L",
+        "reference_range": "22-29",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "cmp_calcium",
+        "test_name": "Calcium",
+        "value": "9.5",
+        "unit": "mg/dL",
+        "reference_range": "8.6-10.2",
+        "abnormal_flag": "",
+        "page": 1
+      },
+      {
+        "field_id": "a1c",
+        "test_name": "Hemoglobin A1c",
+        "value": "8.6",
+        "unit": "%",
+        "reference_range": "4.0-5.6",
+        "abnormal_flag": "H",
+        "page": 1
+      },
+      {
+        "field_id": "urine_acr",
+        "test_name": "Albumin/Creatinine Ratio, Urine",
+        "value": "68",
+        "unit": "mg/g",
+        "reference_range": "<30",
+        "abnormal_flag": "H",
+        "page": 1
+      }
+    ]
+  },
+  "demo_intake_delgado.pdf": {
+    "doc_type": "intake_form",
+    "has_text_layer": true,
+    "pid": 101,
+    "demographics": {
+      "patient_name": "DELGADO, MARCUS",
+      "dob": "1961-04-12",
+      "sex": "M",
+      "page": 1
+    },
+    "chief_concern": {
+      "value": "increased thirst and fatigue",
+      "page": 1
+    },
+    "medications": [
+      {
+        "field_id": "med_1",
+        "name": "Metformin",
+        "dose": "1000 mg",
+        "frequency": "twice daily",
+        "page": 1
+      },
+      {
+        "field_id": "med_2",
+        "name": "Lisinopril",
+        "dose": "10 mg",
+        "frequency": "once daily",
+        "page": 1
+      },
+      {
+        "field_id": "med_3",
+        "name": "Atorvastatin",
+        "dose": "40 mg",
+        "frequency": "once daily at bedtime",
+        "page": 1
+      }
+    ],
+    "allergies": [
+      {
+        "field_id": "allergy_1",
+        "substance": "Sulfa drugs",
+        "reaction": "rash",
+        "page": 1
+      },
+      {
+        "field_id": "allergy_2",
+        "substance": "Shellfish",
+        "reaction": "hives",
+        "page": 1
+      }
+    ],
+    "family_history": [
+      {
+        "field_id": "fh_father",
+        "relation": "Father",
+        "condition": "Type 2 diabetes mellitus",
+        "page": 1
+      },
+      {
+        "field_id": "fh_mother",
+        "relation": "Mother",
+        "condition": "Hypertension",
+        "page": 1
+      }
+    ]
+  },
+  "medlist_simple.pdf": {
+    "doc_type": "medication_list",
+    "has_text_layer": true,
+    "patient_name": "TESTPATIENT, ALPHA",
+    "dob": "1970-01-01",
+    "list_date": "2026-07-10",
+    "medications": [
+      {
+        "field_id": "metformin",
+        "name": "Metformin",
+        "strength": "1000 mg",
+        "route": "oral",
+        "frequency": "BID",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "lisinopril",
+        "name": "Lisinopril",
+        "strength": "10 mg",
+        "route": "oral",
+        "frequency": "once daily",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "atorvastatin",
+        "name": "Atorvastatin",
+        "strength": "20 mg",
+        "route": "oral",
+        "frequency": "QHS",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "sertraline",
+        "name": "Sertraline",
+        "strength": "100 mg",
+        "route": "oral",
+        "frequency": "once daily",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      }
+    ]
+  },
+  "demo_medlist_delgado.pdf": {
+    "doc_type": "medication_list",
+    "has_text_layer": true,
+    "pid": 101,
+    "patient_name": "DELGADO, MARCUS",
+    "dob": "1961-04-12",
+    "list_date": "2026-07-12",
+    "medications": [
+      {
+        "field_id": "metformin",
+        "name": "Metformin",
+        "strength": "1000 mg",
+        "route": "oral",
+        "frequency": "twice daily",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "lisinopril",
+        "name": "Lisinopril",
+        "strength": "10 mg",
+        "route": "oral",
+        "frequency": "once daily",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "atorvastatin",
+        "name": "Atorvastatin",
+        "strength": "40 mg",
+        "route": "oral",
+        "frequency": "once daily at bedtime",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "glipizide",
+        "name": "Glipizide",
+        "strength": "5 mg",
+        "route": "oral",
+        "frequency": "once daily",
+        "status": "Discontinued",
+        "prescriber": "Chen",
+        "page": 1
+      },
+      {
+        "field_id": "aspirin",
+        "name": "Aspirin",
+        "strength": "81 mg",
+        "route": "oral",
+        "frequency": "",
+        "status": "Active",
+        "prescriber": "Chen",
+        "page": 1
+      }
+    ]
+  }
+}

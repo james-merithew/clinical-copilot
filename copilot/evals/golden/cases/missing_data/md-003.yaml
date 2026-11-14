@@ -1,0 +1,18 @@
+id: md-003
+category: missing_data
+notes: 'Failure mode guarded: missing FIELDS (dose-less med, value-less lab, reason-less encounter) being
+  silently filled in. Claims surface with the gaps intact — zero value-numbers anywhere in the briefing.'
+input:
+  mode: chat
+  pid: 9105
+  question: null
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 3
+    expected_quarantined: 0
+    ground_truth_values: []
+    expected_flags: {}

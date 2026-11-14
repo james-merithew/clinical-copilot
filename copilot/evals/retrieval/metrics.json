@@ -1,0 +1,181 @@
+{
+  "n_queries": 17,
+  "index": "keyless (BM25 + hashed TF-IDF + noop rerank)",
+  "recall@1": 0.7941,
+  "recall@3": 0.9706,
+  "recall@5": 1.0,
+  "mrr": 0.902,
+  "per_query": [
+    {
+      "query": "metformin eGFR cutoff",
+      "relevant": [
+        "metformin-egfr"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "can I keep metformin when kidney function is low",
+      "relevant": [
+        "metformin-egfr"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "hypertension treatment target",
+      "relevant": [
+        "acc-aha-htn-2017"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "when do we start blood pressure medication",
+      "relevant": [
+        "acc-aha-htn-2017"
+      ],
+      "first_relevant_rank": 2,
+      "recall@1": 0.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "A1c goal for most adults with diabetes",
+      "relevant": [
+        "ada-soc-glycemic"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "how often to monitor glucose",
+      "relevant": [
+        "ada-soc-glycemic"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "statin primary prevention groups",
+      "relevant": [
+        "ascvd-statin-primary"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "who qualifies for a statin without established heart disease",
+      "relevant": [
+        "ascvd-statin-primary"
+      ],
+      "first_relevant_rank": 2,
+      "recall@1": 0.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "GDMT four pillars for HFrEF",
+      "relevant": [
+        "acc-aha-hf-2022"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "heart failure ejection fraction classes",
+      "relevant": [
+        "acc-aha-hf-2022"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "CKD staging CGA system",
+      "relevant": [
+        "kdigo-ckd-2024"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "when to refer chronic kidney disease to nephrology",
+      "relevant": [
+        "ada-soc-ckd-dm",
+        "kdigo-ckd-2024"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 0.5,
+      "recall@3": 0.5,
+      "recall@5": 1.0
+    },
+    {
+      "query": "screening for kidney disease in diabetes",
+      "relevant": [
+        "ada-soc-ckd-dm"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "adult vaccination schedule",
+      "relevant": [
+        "acip-adult-immunizations"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "which adult immunizations are due by age",
+      "relevant": [
+        "acip-adult-immunizations"
+      ],
+      "first_relevant_rank": 3,
+      "recall@1": 0.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "adult cancer screening recommendations",
+      "relevant": [
+        "uspstf-screening-adults"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    },
+    {
+      "query": "preventive screening for bone health",
+      "relevant": [
+        "uspstf-screening-adults"
+      ],
+      "first_relevant_rank": 1,
+      "recall@1": 1.0,
+      "recall@3": 1.0,
+      "recall@5": 1.0
+    }
+  ]
+}

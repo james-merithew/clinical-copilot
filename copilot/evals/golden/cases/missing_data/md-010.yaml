@@ -1,0 +1,20 @@
+id: md-010
+category: missing_data
+notes: 'Failure mode guarded: history that exists nowhere in the chart (''colonoscopy in 2019'') being
+  asserted via a never-issued encounter handle. Provenance quarantines it; the real encounter claim survives.'
+input:
+  mode: chat
+  pid: 9101
+  question: Is he due for colon cancer screening?
+  transcript: md-010.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values: []
+    briefing_must_not_contain:
+    - Colonoscopy

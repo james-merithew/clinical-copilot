@@ -1,0 +1,289 @@
+{
+  "info": {
+    "name": "Clinical Co-Pilot API",
+    "description": "Runnable collection for the Clinical Co-Pilot sidecar. Week 1: /health, /ready, /chat (free-text, chip, authz-denial). Week 2: /ingest (document upload), the document viewer (/documents/{id}/meta, /page/{n}.png, /citations), /metrics/summary, and the full 'what changed?' chat flow. Auth is a short-lived OpenEMR-minted session token (the reusable bearer was revoked): GET {{baseUrl}}/dev/token (dev-mode only) and set {{token}}, or paste a token from the OpenEMR Co-Pilot panel. Set baseUrl, token, documentId. Bruno is the primary collection; this Postman v2.1 export is an equivalent convenience.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8808",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Health (liveness)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Liveness probe. 200 {\"status\":\"alive\"} whenever the process is up. No auth, no dependency checks."
+      }
+    },
+    {
+      "name": "02 Ready (dependency check)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/ready",
+          "host": ["{{baseUrl}}"],
+          "path": ["ready"]
+        },
+        "description": "Readiness probe. Pings database + llm + observability. 200 only when all healthy, else 503 with a per-check breakdown."
+      }
+    },
+    {
+      "name": "03 Chat - free text (pid 101)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pid\": 101,\n  \"message\": \"Brief me on this patient\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/chat",
+          "host": ["{{baseUrl}}"],
+          "path": ["chat"]
+        },
+        "description": "Free-text turn, Showcase A (pid 101). Expect a source-attributed briefing (form_encounter / prescriptions / procedure_result PKs), the Metformin divergence, and the A1c trend."
+      }
+    },
+    {
+      "name": "04 Chat - chip care_gaps (pid 102)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pid\": 102,\n  \"chip_intent\": \"care_gaps\",\n  \"chip_params\": {}\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/chat",
+          "host": ["{{baseUrl}}"],
+          "path": ["chat"]
+        },
+        "description": "Chip turn, Showcase B (pid 102). Expect care-gap items plus constraint_flags: penicillin<->amoxicillin allergy interaction and warfarin+ibuprofen drug-drug pair."
+      }
+    },
+    {
+      "name": "05 Chat - authz denial (pid 23)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pid\": 23,\n  \"message\": \"Brief me on this patient\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/chat",
+          "host": ["{{baseUrl}}"],
+          "path": ["chat"]
+        },
+        "description": "Denial fixture. pid 23 belongs to a different provider; the Authorization Gateway returns 403 AuthzDenied before any read."
+      }
+    },
+    {
+      "name": "06 Ingest - lab PDF (pid 101)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Capture document_id so the viewer requests (07-09) can use it.",
+              "try { var b = pm.response.json(); if (b.document_id) pm.collectionVariables.set('documentId', b.document_id); } catch (e) {}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "pid", "value": "101", "type": "text" },
+            { "key": "doc_type", "value": "lab_report", "type": "text" },
+            { "key": "file", "type": "file", "src": "../tests/ingest/fixtures/demo_lab_delgado.pdf" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ingest",
+          "host": ["{{baseUrl}}"],
+          "path": ["ingest"]
+        },
+        "description": "Week 2 document ingestion (multipart: pid, doc_type, file). Requires COPILOT_INGEST_ENABLED=true and the seeded copilot schema. Returns IngestResult { status, document_id, persisted[] citations, gaps[] (stated in words), needs_review[], field counts }. Fail-closed: an unverified value is a gap, never persisted. Re-run = deduplicated=true, zero new rows. In Postman, set the file field's src to your local copilot/tests/ingest/fixtures/demo_lab_delgado.pdf. The test script stores document_id into the documentId variable."
+      }
+    },
+    {
+      "name": "07 Document meta (pid 101)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/documents/{{documentId}}/meta?pid=101",
+          "host": ["{{baseUrl}}"],
+          "path": ["documents", "{{documentId}}", "meta"],
+          "query": [{ "key": "pid", "value": "101" }]
+        },
+        "description": "DocumentMeta { document_id, pid, mimetype, page_count, pages[] } for the overlay viewer. pid required; document<->patient ownership re-checked every call (404 for the wrong patient)."
+      }
+    },
+    {
+      "name": "08 Document page PNG (pid 101)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/documents/{{documentId}}/page/1.png?pid=101&scale=2.0",
+          "host": ["{{baseUrl}}"],
+          "path": ["documents", "{{documentId}}", "page", "1.png"],
+          "query": [
+            { "key": "pid", "value": "101" },
+            { "key": "scale", "value": "2.0" }
+          ]
+        },
+        "description": "Server-rendered (pypdfium2) page image for the bbox overlay, LRU-cached. Ownership check runs BEFORE the cache is consulted every request. Response is image/png bytes."
+      }
+    },
+    {
+      "name": "09 Document citations (pid 101)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/documents/{{documentId}}/citations?pid=101",
+          "host": ["{{baseUrl}}"],
+          "path": ["documents", "{{documentId}}", "citations"],
+          "query": [{ "key": "pid", "value": "101" }]
+        },
+        "description": "Persisted provenance: one DocumentRef per verified field (page + field_id + bbox + verbatim quote) — the click-to-source targets. Only verified fields appear; a failed-verification field is a gap, not a citation."
+      }
+    },
+    {
+      "name": "10 Metrics summary (dashboard data)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/metrics/summary",
+          "host": ["{{baseUrl}}"],
+          "path": ["metrics", "summary"]
+        },
+        "description": "PHI-free counters behind /dashboard: endpoints (count/errors/p50/p95), turns, nodes (per graph node), routing, ingestion (field_pass_rate), retrieval (hit_rate/degraded), evals. Route templates + enums only; no PHI. Bearer-protected."
+      }
+    },
+    {
+      "name": "11 Chat - what changed (Week 2 flow, pid 101)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pid\": 101,\n  \"message\": \"what changed for this patient?\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/chat",
+          "host": ["{{baseUrl}}"],
+          "path": ["chat"]
+        },
+        "description": "Full Week 2 chat flow — run 06 (ingest) first. The uploaded document's verified facts now appear as cited chart rows in briefing[]; handoffs[] shows the supervisor -> worker -> answerer trail; guideline_evidence[] holds gl:-only claims kept separate from the patient briefing; degraded/notes flag any fallback. Identity is pinned server-side; the client only chooses pid."
+      }
+    },
+    {
+      "name": "12 Ingest - medication list PDF (pid 101)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Capture document_id so the viewer requests (07-09) can use it.",
+              "try { var b = pm.response.json(); if (b.document_id) pm.collectionVariables.set('documentId', b.document_id); } catch (e) {}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "pid", "value": "101", "type": "text" },
+            { "key": "doc_type", "value": "medication_list", "type": "text" },
+            { "key": "file", "type": "file", "src": "../tests/ingest/fixtures/demo_medlist_delgado.pdf" }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/ingest",
+          "host": ["{{baseUrl}}"],
+          "path": ["ingest"]
+        },
+        "description": "Week 2 third document type: medication list (multipart: pid, doc_type=medication_list, file). Verified rows persist to lists (type='medication') — NEVER prescriptions: a document-reported med carries no prescriber authority. Expect 5 rows for this fixture (Glipizide Discontinued -> activity=0; Aspirin's missing frequency surfaced under gaps as not_found). persisted[] pairs a lists SourceRef with a DocumentRef (page + verbatim row quote + text-layer bbox) per med. Re-run = deduplicated=true, zero new rows. In Postman, set the file field's src to your local copilot/tests/ingest/fixtures/demo_medlist_delgado.pdf. The test script stores document_id into the documentId variable."
+      }
+    },
+    {
+      "name": "13 Labs trend (pid 101)",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": {
+          "raw": "{{baseUrl}}/labs/trend?pid=101",
+          "host": ["{{baseUrl}}"],
+          "path": ["labs", "trend"],
+          "query": [
+            { "key": "pid", "value": "101" },
+            { "key": "test", "value": "A1c", "disabled": true }
+          ]
+        },
+        "description": "Deterministic lab-trend series for the chart widget (T5) - no-LLM sibling of /snapshot. series maps test name -> points sorted ASC by date; every point is a full LabResult citing its procedure_result PK. Optional test filter is applied server-side and echoed back. Same token binding + per-patient scope as /snapshot; a labs failure degrades to 200 + empty series + notes, never a 500."
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+id: ex-017
+category: extraction
+notes: 'Failure mode guarded: a missing medication FREQUENCY silently absent instead of surfaced as
+  a gap — or, worse, blocking the verified row entirely. Stub VLM omits metformin.frequency: the row
+  must still persist on its verified name (all 4 rows land, persisted count checked via
+  expected_meds), and metformin.frequency must appear in gaps as not_found — never invented.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: medlist_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_omit:
+    - metformin.frequency
+    expect_gap_fields:
+    - metformin.frequency
+    expected_meds:
+    - name: Metformin
+      dose: 1000 mg
+    - name: Lisinopril
+      dose: 10 mg
+    - name: Atorvastatin
+      dose: 20 mg
+    - name: Sertraline
+      dose: 100 mg
+    ground_truth_ref: medlist_simple.pdf
+requires:
+- ingest

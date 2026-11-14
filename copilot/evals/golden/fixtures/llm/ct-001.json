@@ -1,0 +1,46 @@
+{
+  "_case": "ct-001",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {},
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "A1c is 8.4 % today",
+                "handles": []
+              },
+              {
+                "text": "Hemoglobin A1c 8.4 % abnormal, range 4.0-5.6",
+                "handles": [
+                  "lab:0"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

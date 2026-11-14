@@ -1,0 +1,23 @@
+id: md-007
+category: missing_data
+notes: 'Failure mode guarded: total tool blackout producing a fabricated briefing. With every tool failing,
+  the turn must end with zero claims, degraded=true, and an explicit note — never invented content.'
+input:
+  mode: chat
+  pid: 9103
+  question: Brief me.
+  transcript: md-007.json
+  failing_tools:
+  - get_care_transitions
+  - get_medications
+  - get_problems_allergies
+  - get_labs
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 0
+    expected_quarantined: 0
+    expect_degraded: true
+    notes_must_contain: available

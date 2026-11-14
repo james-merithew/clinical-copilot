@@ -1,0 +1,40 @@
+meta {
+  name: 13 Labs trend (pid 101)
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/labs/trend?pid=101
+  body: none
+  auth: none
+}
+
+params:query {
+  pid: 101
+  ~test: A1c
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+docs {
+  Deterministic lab-trend series for the chart widget (T5) — a no-LLM sibling
+  of /snapshot. `series` maps test name -> points sorted chronologically ASC;
+  every point is a full LabResult whose `source` cites the real
+  `procedure_result` PK, so the chart is attributed exactly like chat.
+  Extracted-PDF labs (request 06) persist as procedure_result rows and flow in
+  automatically. Enable the optional `test` param to filter server-side
+  (echoed back in the response). Same two-layer authorization as /snapshot:
+  the pid-bound session token ({{token}}) plus the per-patient provider scope —
+  a token for another patient gets a clean 403. If the labs tool fails, the
+  endpoint degrades to 200 + empty `series` + `notes: "labs unavailable"`,
+  never a 500 and never an invented point.
+}
+
+assert {
+  res.status: eq 200
+  res.body.correlation_id: isDefined
+  res.body.series: isDefined
+}

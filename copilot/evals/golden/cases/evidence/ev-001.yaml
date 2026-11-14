@@ -1,0 +1,21 @@
+id: ev-001
+category: evidence
+notes: 'Failure mode guarded: irrelevant chunk retrieved for a core CKD question — staging/referral must
+  surface the KDIGO doc, not a neighbor.'
+input:
+  mode: chat
+  pid: 9101
+  question: How is CKD staged, and when should a patient be referred to nephrology?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: kdigo-ckd-2024
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

@@ -1,0 +1,42 @@
+meta {
+  name: 04 Chat - chip care_gaps (pid 102)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "pid": 102,
+    "chip_intent": "care_gaps",
+    "chip_params": {}
+  }
+}
+
+docs {
+  NOTE (Week 2 auth): with the pid-101 token minted by request 00, this pid-102
+  call is REFUSED (403) — a token for patient A can never act on patient B. To
+  run a real pid-102 turn, mint a pid-102 token (/dev/token?scope=patient&pid=102).
+
+  Chip turn against Showcase B (pid 102) — the "verifier money-shot" patient.
+  A chip tap is first-class: it resolves to the same agent + tools as free text.
+  `chip_intent` must be one of: explain_care_transition, lab_trend, med_detail,
+  care_gaps. Expect care-gap / can't-miss items plus constraint flags (the
+  penicillin<->amoxicillin allergy interaction, the warfarin+ibuprofen drug-drug
+  pair) in `constraint_flags[]`. Requires a valid session token ({{token}}).
+}
+
+assert {
+  res.status: eq 403
+  res.body.reason: isDefined
+}

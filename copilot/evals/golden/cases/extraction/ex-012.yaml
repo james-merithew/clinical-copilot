@@ -1,0 +1,22 @@
+id: ex-012
+category: extraction
+notes: 'Failure mode guarded: PHI leaking into logs during ingestion — patient names, analyte values,
+  verbatim quotes, and above all the UPLOAD FILENAME (filenames contain patient names and are deliberately
+  absent from the log allowlist).'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  no_phi_in_logs: true
+  extra:
+    phi_sentinels:
+    - TESTPATIENT
+    - ALPHA
+    - CHEN, SARAH
+    - lab_simple.pdf
+    - '1970-01-01'
+    - 742-118-4460-0
+requires:
+- ingest

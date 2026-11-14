@@ -1,0 +1,48 @@
+{
+  "_case": "md-005",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_care_transitions",
+          "input": {},
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "ED visit on 2026-07-01 for chest discomfort",
+                "handles": [
+                  "enc:0"
+                ]
+              },
+              {
+                "text": "A1c likely around 8.0 given recent control",
+                "handles": [
+                  "enc:0"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

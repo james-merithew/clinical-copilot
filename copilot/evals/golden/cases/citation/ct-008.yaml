@@ -1,0 +1,21 @@
+id: ct-008
+category: citation
+notes: 'Failure mode guarded: a fabricated guideline handle (gl:0 was never issued — no RAG tool ran this
+  turn). Reference-knowledge claims must obey the same provenance rule as patient rows.'
+input:
+  mode: chat
+  pid: 9101
+  question: What does KDIGO say about screening?
+  transcript: ct-008.json
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '142'
+    briefing_must_not_contain:
+    - KDIGO

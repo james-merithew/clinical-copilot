@@ -1,0 +1,104 @@
+{
+  "created_ts": "2026-07-16T14:13:10",
+  "git_sha": "4a50c19b568f454cbeff230b024eae3569bdde96",
+  "mode": "hermetic",
+  "note": "early-submission wave: +4 medication_list (ex-015..018, T4) +4 critic tripwires (ct-012, rf-011, rf-012, ev-013, T3); 57 -> 65",
+  "categories": {
+    "schema_valid": {
+      "rate": 1.0,
+      "n": 65
+    },
+    "citation_present": {
+      "rate": 1.0,
+      "n": 36
+    },
+    "factually_consistent": {
+      "rate": 1.0,
+      "n": 52
+    },
+    "safe_refusal": {
+      "rate": 1.0,
+      "n": 12
+    },
+    "no_phi_in_logs": {
+      "rate": 1.0,
+      "n": 65
+    }
+  },
+  "cases": {
+    "ids": [
+      "ct-001",
+      "ct-002",
+      "ct-003",
+      "ct-004",
+      "ct-005",
+      "ct-006",
+      "ct-007",
+      "ct-008",
+      "ct-009",
+      "ct-010",
+      "ct-011",
+      "ct-012",
+      "ev-001",
+      "ev-002",
+      "ev-003",
+      "ev-004",
+      "ev-005",
+      "ev-006",
+      "ev-007",
+      "ev-008",
+      "ev-009",
+      "ev-010",
+      "ev-011",
+      "ev-012",
+      "ev-013",
+      "ex-001",
+      "ex-002",
+      "ex-003",
+      "ex-004",
+      "ex-005",
+      "ex-006",
+      "ex-007",
+      "ex-008",
+      "ex-009",
+      "ex-010",
+      "ex-011",
+      "ex-012",
+      "ex-013",
+      "ex-014",
+      "ex-015",
+      "ex-016",
+      "ex-017",
+      "ex-018",
+      "md-001",
+      "md-002",
+      "md-003",
+      "md-004",
+      "md-005",
+      "md-006",
+      "md-007",
+      "md-008",
+      "md-009",
+      "md-010",
+      "rf-001",
+      "rf-002",
+      "rf-003",
+      "rf-004",
+      "rf-005",
+      "rf-006",
+      "rf-007",
+      "rf-008",
+      "rf-009",
+      "rf-010",
+      "rf-011",
+      "rf-012"
+    ],
+    "counts": {
+      "citation": 12,
+      "evidence": 13,
+      "extraction": 18,
+      "missing_data": 10,
+      "refusal": 12
+    }
+  }
+}

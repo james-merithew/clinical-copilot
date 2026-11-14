@@ -1,0 +1,19 @@
+id: md-009
+category: missing_data
+notes: 'Failure mode guarded: an empty tool result (no labs on file) answered with fabricated labs. Zero
+  claims + an explicit ''no lab results'' note; degraded stays FALSE because nothing failed — absence
+  of data is not an error.'
+input:
+  mode: chat
+  pid: 9102
+  question: Latest labs?
+  transcript: md-009.json
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 0
+    expected_quarantined: 0
+    expect_degraded: false
+    notes_must_contain: no lab

@@ -1,0 +1,54 @@
+{
+  "_case": "ct-005",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_medications",
+          "input": {},
+          "id": "tu_0"
+        },
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {},
+          "id": "tu_1"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "Warfarin therapy ongoing",
+                "handles": [
+                  "lab:0"
+                ]
+              },
+              {
+                "text": "Warfarin 5 mg active",
+                "handles": [
+                  "med:2"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

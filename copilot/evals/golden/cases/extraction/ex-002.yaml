@@ -1,0 +1,19 @@
+id: ex-002
+category: extraction
+notes: 'Failure mode guarded: abnormal flags dropped or invented during extraction. Exactly cmp_glucose
+  and a1c carry flag H on lab_simple.pdf.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    abnormal_fields:
+    - cmp_glucose
+    - a1c
+    ground_truth_ref: lab_simple.pdf
+requires:
+- ingest

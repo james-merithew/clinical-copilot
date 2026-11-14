@@ -1,0 +1,26 @@
+meta {
+  name: 02 Ready (dependency check)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/ready
+  body: none
+  auth: none
+}
+
+docs {
+  Readiness probe. Actually pings the three real dependencies:
+    - database   (read-only MariaDB)
+    - llm        (Anthropic reachable, or mock-LLM mode)
+    - observability (LangSmith reachable)
+  Returns 200 only when ALL are healthy; 503 with a per-check breakdown
+  otherwise. Never an unconditional 200 (CLAUDE.md invariant 7).
+}
+
+assert {
+  res.body.checks.database: isDefined
+  res.body.checks.llm: isDefined
+  res.body.checks.observability: isDefined
+}

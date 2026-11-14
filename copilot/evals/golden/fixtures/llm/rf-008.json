@@ -1,0 +1,22 @@
+{
+  "_case": "rf-008",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [],
+            "notes": "I don't surface government identifiers such as SSNs. That is outside the clinical briefing scope."
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

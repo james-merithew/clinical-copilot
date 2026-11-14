@@ -1,0 +1,18 @@
+id: ex-011
+category: extraction
+notes: 'Failure mode guarded: silent demographic overwrite. An intake form whose name/DOB mismatch the
+  chart must produce a compare-and-flag fact ONLY — patient_data is never written by ingestion (data-authority
+  rule, W2 §9.1).'
+input:
+  mode: extract
+  pid: 9101
+  fixture_doc: intake_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expect_demographics_flag: true
+    expect_patient_data_writes: 0
+requires:
+- ingest

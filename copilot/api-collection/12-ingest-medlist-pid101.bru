@@ -1,0 +1,52 @@
+meta {
+  name: 12 Ingest - medication list PDF (pid 101)
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/ingest
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+body:multipart-form {
+  pid: 101
+  doc_type: medication_list
+  file: @file(../tests/ingest/fixtures/demo_medlist_delgado.pdf)
+}
+
+script:post-response {
+  // Capture the new document_id so the viewer requests (07-09) can use it.
+  if (res.body && res.body.document_id) {
+    bru.setVar("documentId", res.body.document_id);
+  }
+}
+
+docs {
+  Week 2 third document type: medication list. Uploads the synthetic pharmacy
+  med-list PDF for Showcase A (pid 101). Same preconditions as 06
+  (COPILOT_INGEST_ENABLED=true, seeded copilot schema).
+
+  Verified rows persist to `lists` (type='medication') — NEVER `prescriptions`:
+  a document-reported med carries no prescriber authority. Expect 5 rows for
+  this fixture: Metformin/Lisinopril/Atorvastatin active, Glipizide
+  Discontinued (activity=0), Aspirin persisted with its missing frequency
+  surfaced under `gaps` as not_found. `persisted[]` pairs a lists SourceRef
+  with a DocumentRef (page + verbatim row quote + text-layer bbox) per med.
+  Re-running this request returns `deduplicated=true` with zero new rows
+  (UNIQUE(content_hash, pid)).
+
+  The post-response script stores `document_id` into the `documentId`
+  collection var for the viewer requests.
+}
+
+assert {
+  res.status: eq 200
+  res.body.correlation_id: isDefined
+  res.body.status: isDefined
+}

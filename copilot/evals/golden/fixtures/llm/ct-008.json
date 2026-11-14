@@ -1,0 +1,48 @@
+{
+  "_case": "ct-008",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {},
+          "id": "tu_0"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "KDIGO guidance recommends annual albuminuria screening",
+                "handles": [
+                  "gl:0"
+                ]
+              },
+              {
+                "text": "Glucose 142 mg/dL abnormal, reference range 70-99",
+                "handles": [
+                  "lab:1"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

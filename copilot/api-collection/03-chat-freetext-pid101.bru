@@ -1,0 +1,37 @@
+meta {
+  name: 03 Chat - free text (pid 101)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "pid": 101,
+    "message": "Brief me on this patient"
+  }
+}
+
+docs {
+  Free-text turn against Showcase A (pid 101) — the "2:15" chronic-care patient.
+  Expect a fully source-attributed briefing: each claim in `briefing[]` carries
+  `source_refs` bound to real OpenEMR PKs (form_encounter / prescriptions /
+  procedure_result). Watch for the prescriptions-vs-lists Metformin divergence
+  flag and the A1c trend. Requires a valid session token ({{token}}).
+}
+
+assert {
+  res.status: eq 200
+  res.body.correlation_id: isDefined
+  res.body.briefing: isDefined
+}

@@ -1,0 +1,23 @@
+id: md-004
+category: missing_data
+notes: 'Failure mode guarded: a tool failure (labs unavailable) NOT being flagged — the partial briefing
+  must set degraded=true and say so in notes, while the surviving claims stay cited.'
+input:
+  mode: chat
+  pid: 9101
+  question: Brief me — labs too.
+  transcript: md-004.json
+  failing_tools:
+  - get_labs
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 0
+    ground_truth_values:
+    - '1000'
+    expect_degraded: true
+    notes_must_contain: unavailable

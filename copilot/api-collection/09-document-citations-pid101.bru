@@ -1,0 +1,34 @@
+meta {
+  name: 09 Document citations (pid 101)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/documents/{{documentId}}/citations?pid=101
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+params:query {
+  pid: 101
+}
+
+docs {
+  The persisted provenance for a document: one DocumentRef per extracted field
+  that verified, carrying page + field_id + bbox (normalized 0-1, with origin) +
+  the verbatim text-layer quote. This is what the UI turns into the overlay and
+  the click-to-source chips.
+
+  `pid` is required; ownership is re-checked (404 for the wrong patient). Only
+  verified fields appear here — a failed-verification field was never persisted,
+  so it is a gap on the ingest result, not a citation.
+}
+
+assert {
+  res.status: eq 200
+}

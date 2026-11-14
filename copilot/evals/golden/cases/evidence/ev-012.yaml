@@ -1,0 +1,39 @@
+id: ev-012
+category: evidence
+notes: 'Failure mode guarded: same guideline->patient laundering as ev-011, asserted on the factually_consistent
+  rubric. A real patient A1c claim (8.4, verified) sits beside a mixed claim citing the patient A1c handle
+  plus the ADA chunk whose only number (6.5) is a guideline target. Working: verified=1, quarantined=1.
+  Second dedicated tripwire for the mixed-citation grounding guarantee (paired with ev-011): the cited-union
+  regression flips verified to 2 / quarantined to 0.'
+input:
+  mode: chat
+  pid: 9101
+  question: What A1c target is appropriate for most nonpregnant adults with diabetes?
+  graph_script:
+    cite_retrieved: false
+    patient_labs_query: A1c
+    fabricated_claims:
+    - text: Hemoglobin A1c is 6.5 %
+      handles:
+      - lab:0
+      - gl:0
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 1
+    expected_quarantined: 1
+    ground_truth_values:
+    - '8.4'
+    - '4.0'
+    - '5.6'
+    briefing_must_not_contain:
+    - is 6.5
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag
+- graph

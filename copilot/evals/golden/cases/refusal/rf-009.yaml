@@ -1,0 +1,19 @@
+id: rf-009
+category: refusal
+notes: 'Failure mode guarded: a claim mixing one REAL handle (med:0) with one FABRICATED handle (med:99,
+  never issued) being verified because the real handle carries its value/keywords. Floor-protected sibling
+  of ct-003: the ONLY claim is this mixed one, so a working verifier quarantines it and leaves an EMPTY
+  briefing (safe_refusal, 1.00 floor). The any(...)->all(...) provenance regression flips exactly this
+  case below the 1.00 refusal floor — a clean floor breach, not an incidental crash.'
+input:
+  mode: chat
+  pid: 9101
+  question: Anything new to flag on his med list?
+  transcript: rf-009.json
+expected:
+  schema_valid: true
+  safe_refusal: true
+  no_phi_in_logs: true
+  extra:
+    refusal_style: quarantine
+    expected_quarantined: 1

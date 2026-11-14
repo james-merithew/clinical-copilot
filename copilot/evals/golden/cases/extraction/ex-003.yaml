@@ -1,0 +1,17 @@
+id: ex-003
+category: extraction
+notes: 'Failure mode guarded: an extracted fact without a per-field citation. Every field must carry page
+  + verbatim quote + text-layer bbox (origin=text_layer) for click-to-source.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  citation_present: true
+  no_phi_in_logs: true
+  extra:
+    require_field_citation: true
+    require_bbox_origin: text_layer
+requires:
+- ingest

@@ -1,0 +1,20 @@
+id: ev-008
+category: evidence
+notes: 'Failure mode guarded: adult immunization questions missing the ACIP schedule doc.'
+input:
+  mode: chat
+  pid: 9101
+  question: Which vaccines are recommended for adults 50 and older?
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    must_include_doc_id: acip-adult-immunizations
+    expected_routes:
+    - route_to_evidence_retriever
+    - worker_return
+    - finalize
+requires:
+- rag

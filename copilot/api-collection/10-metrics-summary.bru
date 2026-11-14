@@ -1,0 +1,34 @@
+meta {
+  name: 10 Metrics summary (dashboard data)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/metrics/summary
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{token}}
+}
+
+docs {
+  The PHI-free counters that back /dashboard. No log access needed to answer "is
+  the system healthy?". Keys are route TEMPLATES and enums only — no names,
+  filenames, quotes, or free text ever enter this payload (an unmatched route
+  buckets under `<unmatched>`).
+
+  Expect: `endpoints` (per-route count / errors_4xx / errors_5xx / p50 / p95),
+  `turns` (+ by_kind, p50/p95), `nodes` (per graph node p50/p95), `routing`
+  outcomes, `ingestion` (count + field_pass_rate), `retrieval` (hit_rate +
+  degraded), and `evals` (last golden run's per-category rates). Bearer-protected
+  like every endpoint.
+}
+
+assert {
+  res.status: eq 200
+  res.body.endpoints: isDefined
+  res.body.turns: isDefined
+}

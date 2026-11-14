@@ -1,0 +1,25 @@
+id: ex-014
+category: extraction
+notes: 'Failure mode guarded: a digit-dropped decimal value passing verification by RAW SUBSTRING containment.
+  Stub VLM returns a1c=8 while the genuine quote reads "Hemoglobin A1c 8.4 H % 4.0-5.6": 8 is a substring
+  of 8.4 but NOT a token of the quote, so token-aligned verification must fail it and persist nothing.
+  Second dedicated tripwire for the substring-not-token extraction guarantee (paired with ex-013): restoring
+  substring containment re-verifies 8 and persists a wrong A1c.'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_simple.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    inject_vlm_value:
+      field_id: a1c
+      value: '8'
+    expect_status:
+      a1c: failed_verification
+    expect_not_persisted:
+    - a1c
+requires:
+- ingest

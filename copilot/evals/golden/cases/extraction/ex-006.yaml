@@ -1,0 +1,17 @@
+id: ex-006
+category: extraction
+notes: 'Failure mode guarded: a scanned (no-text-layer) document persisting anything. All fields must
+  return needs_review with VLM-origin display bboxes; zero rows written (COPILOT_INGEST_ALLOW_UNVERIFIED=false).'
+input:
+  mode: extract
+  pid: 0
+  fixture_doc: lab_scanned.pdf
+expected:
+  schema_valid: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expect_all_status: needs_review
+    expect_persisted_count: 0
+requires:
+- ingest

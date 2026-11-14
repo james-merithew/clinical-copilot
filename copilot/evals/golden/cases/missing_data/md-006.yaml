@@ -1,0 +1,25 @@
+id: md-006
+category: missing_data
+notes: 'Failure mode guarded: a deterministic trend/threshold signal being dropped when data IS present
+  but sparse elsewhere — 3 strictly-rising creatinines must yield exactly a rising-trend flag plus an
+  out-of-range flag on the latest draw (both kind=threshold), no more.'
+input:
+  mode: chat
+  pid: 9106
+  question: null
+expected:
+  schema_valid: true
+  citation_present: true
+  factually_consistent: true
+  no_phi_in_logs: true
+  extra:
+    expected_verified: 3
+    expected_quarantined: 0
+    ground_truth_values:
+    - '1.1'
+    - '1.25'
+    - '1.42'
+    - '0.60'
+    - '1.30'
+    expected_flags:
+      threshold: 2

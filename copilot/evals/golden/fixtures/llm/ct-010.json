@@ -1,0 +1,66 @@
+{
+  "_case": "ct-010",
+  "responses": [
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "get_medications",
+          "input": {},
+          "id": "tu_0"
+        },
+        {
+          "type": "tool_use",
+          "name": "get_labs",
+          "input": {},
+          "id": "tu_1"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    },
+    {
+      "content": [
+        {
+          "type": "tool_use",
+          "name": "submit_briefing",
+          "input": {
+            "claims": [
+              {
+                "text": "Prescribed apixaban 5 mg",
+                "handles": [
+                  "med:77"
+                ]
+              },
+              {
+                "text": "A1c improved to 6.9 % last month",
+                "handles": [
+                  "lab:0"
+                ]
+              },
+              {
+                "text": "Warfarin 5 mg active",
+                "handles": [
+                  "med:2"
+                ]
+              },
+              {
+                "text": "Hemoglobin A1c 8.4 % abnormal",
+                "handles": [
+                  "lab:0"
+                ]
+              }
+            ]
+          },
+          "id": "tu_s"
+        }
+      ],
+      "usage": {
+        "input_tokens": 200,
+        "output_tokens": 60
+      }
+    }
+  ]
+}

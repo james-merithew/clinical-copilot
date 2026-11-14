@@ -1,0 +1,22 @@
+{
+  "n_queries": 17,
+  "first_stage": "BM25 + hashed TF-IDF + RRF (keyless)",
+  "off_noop": {
+    "recall@1": 0.7941,
+    "recall@3": 0.9706,
+    "mrr": 0.902
+  },
+  "on_lexical_keyless": {
+    "recall@1": 0.6471,
+    "recall@3": 0.8235,
+    "mrr": 0.7598
+  },
+  "oracle_upper_bound": {
+    "recall@1": 1.0,
+    "recall@3": 1.0,
+    "mrr": 1.0
+  },
+  "live_provider": null,
+  "headroom_mrr": 0.098,
+  "lexical_delta_mrr": -0.1422
+}

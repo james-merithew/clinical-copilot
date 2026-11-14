@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Co-Pilot — System Dashboard</title>
+<style>
+  :root {
+    --canvas: #F6F9FB; --card: #FFFFFF; --card-2: #F1F6F9;
+    --hair: #E6EDF1; --hair-strong: #D3DEE5;
+    --text: #0B1524; --muted: #5C6B7A; --faint: #8A9AA6;
+    --accent: #0FB5A6; --accent-soft: rgba(15,181,166,.10); --accent-line: rgba(15,181,166,.28);
+    --sky: #2E9BD6;
+    --crit: #E5484D; --crit-soft: #FDECEC; --crit-ink: #B4232A;
+    --warn: #E8A317; --warn-soft: #FCF3E1; --warn-ink: #9A6E08;
+    --good: #16A37B; --good-soft: #E6F6EF; --good-ink: #0E7C5D;
+    --shadow: 0 1px 2px rgba(11,21,36,.05), 0 4px 14px rgba(11,21,36,.04);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --canvas: #0C1214; --card: #141D21; --card-2: #182329;
+      --hair: #22303A; --hair-strong: #2E3F4A;
+      --text: #E7EEF2; --muted: #8A9AA6; --faint: #6E7F8B;
+      --accent: #17C4B4; --accent-soft: rgba(23,196,180,.14); --accent-line: rgba(23,196,180,.34);
+      --sky: #4FB0E4;
+      --crit: #F0666B; --crit-soft: rgba(229,72,77,.15); --crit-ink: #F5A3A6;
+      --warn: #EEB43F; --warn-soft: rgba(232,163,23,.15); --warn-ink: #F0CB78;
+      --good: #35BE95; --good-soft: rgba(22,163,123,.15); --good-ink: #7BDCBB;
+      --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.28);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--canvas); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 22px 18px 40px; }
+  .head { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .logo {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(140deg, var(--accent), var(--sky));
+    display: inline-flex; align-items: center; justify-content: center; color: #fff;
+  }
+  .logo svg { width: 18px; height: 18px; }
+  .head h1 { font-size: 18px; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  .head .sub { font-size: 12px; color: var(--faint); }
+  .head .right { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); display: inline-block; }
+  .dot.err { background: var(--crit); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--card); border: 1px solid var(--hair); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 14px 16px; min-width: 0;
+  }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 {
+    margin: 0 0 10px; font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--faint);
+  }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  .stat .v { font-size: 24px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .stat .k { font-size: 11px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+  .stat .v.good { color: var(--good-ink); }
+  .stat .v.warn { color: var(--warn-ink); }
+  .stat .v.crit { color: var(--crit-ink); }
+  .tbl-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 6px 10px; font-size: 12.5px; border-top: 1px solid var(--hair); white-space: nowrap; }
+  th { color: var(--faint); font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; border-top: none; }
+  th:first-child, td:first-child { text-align: left; }
+  td:first-child { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; color: var(--text); }
+  td .bad { color: var(--crit-ink); font-weight: 700; }
+  td .warnc { color: var(--warn-ink); font-weight: 700; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 700;
+  }
+  .pill.pass { background: var(--good-soft); color: var(--good-ink); }
+  .pill.fail { background: var(--crit-soft); color: var(--crit-ink); }
+  .pill.na { background: var(--card-2); color: var(--faint); }
+  .bar { height: 6px; border-radius: 4px; background: var(--card-2); overflow: hidden; min-width: 70px; }
+  .bar > i { display: block; height: 100%; background: var(--good); border-radius: 4px; }
+  .bar > i.warn { background: var(--warn); }
+  .bar > i.crit { background: var(--crit); }
+  .empty { color: var(--faint); font-size: 12.5px; font-style: italic; padding: 4px 0; }
+  .errbox {
+    background: var(--crit-soft); border: 1px solid var(--crit); border-radius: var(--radius);
+    color: var(--crit-ink); padding: 12px 14px; font-weight: 600; margin-bottom: 14px; display: none;
+  }
+  .footnote { margin-top: 16px; font-size: 11.5px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+    </span>
+    <div>
+      <h1>Clinical Co-Pilot — System Dashboard</h1>
+      <div class="sub">PHI-free counters &amp; rates · in-process since last restart</div>
+    </div>
+    <div class="right">
+      <span id="status-dot" class="dot"></span>
+      <span id="status-text">loading…</span>
+    </div>
+  </div>
+
+  <div class="errbox" id="errbox"></div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Chat turns</h2>
+      <div class="stats" id="turn-stats"></div>
+    </div>
+    <div class="card">
+      <h2>Ingestion</h2>
+      <div class="stats" id="ingest-stats"></div>
+    </div>
+    <div class="card">
+      <h2>Guideline retrieval</h2>
+      <div class="stats" id="retrieval-stats"></div>
+    </div>
+    <div class="card">
+      <h2>Routing decisions</h2>
+      <div class="tbl-wrap"><table id="routing-tbl"></table></div>
+    </div>
+    <div class="card">
+      <h2>Graph node latency</h2>
+      <div class="tbl-wrap"><table id="node-tbl"></table></div>
+    </div>
+    <div class="card">
+      <h2>Eval gate (last golden run)</h2>
+      <div id="eval-box"></div>
+    </div>
+    <div class="card wide">
+      <h2>Endpoints</h2>
+      <div class="tbl-wrap"><table id="endpoint-tbl"></table></div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Counters reset on process restart. Eval rates come from the last committed
+    golden run (<code>results.json</code>); everything else accumulates live.
+    No PHI: keys are route templates and enums, values are counts and milliseconds.
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // Ops page: reads the session token from the URL fragment (#t=<token>), with a
+  // dev-mode /dev/token fallback. No token is baked into the page.
+  let TOKEN = "";
+  function readHashToken() {
+    const h = (location.hash || "").replace(/^#/, "");
+    return new URLSearchParams(h).get("t") || new URLSearchParams(location.search).get("t") || "";
+  }
+  async function resolveToken() {
+    TOKEN = readHashToken();
+    if (TOKEN) return true;
+    try {
+      const r = await fetch("/dev/token?scope=day");
+      if (r.ok) { TOKEN = (await r.json()).token || ""; return !!TOKEN; }
+    } catch (e) { /* unauthorized */ }
+    return false;
+  }
+  const $ = (id) => document.getElementById(id);
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function stat(value, label, tone) {
+    const s = el("div", "stat");
+    s.appendChild(el("div", "v" + (tone ? " " + tone : ""), value));
+    s.appendChild(el("div", "k", label));
+    return s;
+  }
+  function fmt(v, suffix) {
+    if (v == null) return "—";
+    return String(v) + (suffix || "");
+  }
+  function pct(v) { return v == null ? "—" : (v * 100).toFixed(1) + "%"; }
+
+  function renderTurns(t) {
+    const box = $("turn-stats"); box.innerHTML = "";
+    box.appendChild(stat(fmt(t.count), "turns"));
+    box.appendChild(stat(fmt(t.p50_ms, " ms"), "p50"));
+    box.appendChild(stat(fmt(t.p95_ms, " ms"), "p95"));
+    box.appendChild(stat(fmt(t.errors), "errors", t.errors ? "crit" : "good"));
+    box.appendChild(stat(fmt(t.degraded), "degraded", t.degraded ? "warn" : "good"));
+    box.appendChild(stat(fmt(t.verified_claims), "verified claims"));
+    box.appendChild(stat(fmt(t.quarantined_claims), "quarantined", t.quarantined_claims ? "warn" : "good"));
+  }
+
+  function renderIngest(g) {
+    const box = $("ingest-stats"); box.innerHTML = "";
+    box.appendChild(stat(fmt(g.count), "uploads"));
+    box.appendChild(stat(fmt(g.persisted), "persisted"));
+    box.appendChild(stat(fmt(g.deduplicated), "dedup"));
+    box.appendChild(stat(fmt(g.needs_review), "needs review", g.needs_review ? "warn" : null));
+    box.appendChild(stat(fmt(g.failed), "failed", g.failed ? "crit" : "good"));
+    box.appendChild(stat(pct(g.field_pass_rate), "field pass rate",
+      g.field_pass_rate == null ? null : (g.field_pass_rate >= 0.8 ? "good" : "warn")));
+  }
+
+  function renderRetrieval(r) {
+    const box = $("retrieval-stats"); box.innerHTML = "";
+    box.appendChild(stat(fmt(r.queries), "queries"));
+    box.appendChild(stat(fmt(r.hits), "hits"));
+    box.appendChild(stat(pct(r.hit_rate), "hit rate",
+      r.hit_rate == null ? null : (r.hit_rate >= 0.8 ? "good" : "warn")));
+    box.appendChild(stat(fmt(r.degraded), "degraded runs", r.degraded ? "warn" : "good"));
+  }
+
+  function table(elId, headers, rows, emptyMsg) {
+    const t = $(elId); t.innerHTML = "";
+    if (!rows.length) {
+      t.parentNode.parentNode.querySelectorAll(".empty").forEach(n => n.remove());
+      t.parentNode.parentNode.appendChild(el("div", "empty", emptyMsg));
+      return;
+    }
+    t.parentNode.parentNode.querySelectorAll(".empty").forEach(n => n.remove());
+    const trh = el("tr");
+    headers.forEach(h => trh.appendChild(el("th", null, h)));
+    t.appendChild(trh);
+    rows.forEach(cells => {
+      const tr = el("tr");
+      cells.forEach(c => {
+        const td = el("td");
+        if (c && c.nodeType) td.appendChild(c); else td.textContent = c == null ? "—" : c;
+        tr.appendChild(td);
+      });
+      t.appendChild(tr);
+    });
+  }
+
+  function renderEndpoints(eps) {
+    const rows = Object.keys(eps).map(k => {
+      const e = eps[k];
+      const e4 = e.errors_4xx ? el("span", "warnc", String(e.errors_4xx)) : "0";
+      const e5 = e.errors_5xx ? el("span", "bad", String(e.errors_5xx)) : "0";
+      return [k, e.count, e4, e5, fmt(e.p50_ms), fmt(e.p95_ms), fmt(e.avg_ms)];
+    });
+    table("endpoint-tbl", ["endpoint", "count", "4xx", "5xx", "p50 ms", "p95 ms", "avg ms"],
+      rows, "No requests recorded yet.");
+  }
+
+  function renderNodes(nodes) {
+    const rows = Object.keys(nodes).map(k => {
+      const n = nodes[k];
+      return [k, n.count, fmt(n.p50_ms), fmt(n.p95_ms), fmt(n.avg_ms)];
+    });
+    table("node-tbl", ["node", "turns", "p50 ms", "p95 ms", "avg ms"],
+      rows, "No graph turns recorded yet — send a /chat message.");
+  }
+
+  function renderRouting(routes) {
+    const rows = Object.keys(routes).map(k => [k.replace(/^route_to_/, "→ "), routes[k]]);
+    table("routing-tbl", ["route", "count"], rows,
+      "No routing decisions yet — send a /chat message.");
+  }
+
+  function renderEvals(ev) {
+    const box = $("eval-box"); box.innerHTML = "";
+    if (!ev) {
+      box.appendChild(el("div", "empty", "No results.json found — run the golden runner."));
+      return;
+    }
+    const meta = el("div", "stats");
+    if (ev.overall) {
+      meta.appendChild(stat(fmt(ev.overall.passed) + "/" + fmt(ev.overall.active), "cases passed",
+        ev.overall.failed ? "crit" : "good"));
+      meta.appendChild(stat(pct(ev.overall.rate), "overall rate"));
+      if (ev.overall.skipped) meta.appendChild(stat(fmt(ev.overall.skipped), "pending integration"));
+    }
+    box.appendChild(meta);
+    const cats = ev.per_category || {};
+    const t = el("table"); t.style.marginTop = "10px";
+    const trh = el("tr");
+    ["category", "n", "rate", ""].forEach(h => trh.appendChild(el("th", null, h)));
+    t.appendChild(trh);
+    Object.keys(cats).forEach(c => {
+      const s = cats[c];
+      const tr = el("tr");
+      tr.appendChild(el("td", null, c));
+      tr.appendChild(el("td", null, s.n == null ? "—" : String(s.n)));
+      const rateTd = el("td");
+      const p = el("span", "pill " + (s.rate == null ? "na" : (s.rate >= 0.95 ? "pass" : "fail")));
+      p.textContent = s.rate == null ? "n/a" : (s.rate * 100).toFixed(1) + "%";
+      rateTd.appendChild(p);
+      tr.appendChild(rateTd);
+      const barTd = el("td");
+      const bar = el("div", "bar");
+      const fill = el("i", s.rate == null ? "" : (s.rate >= 0.95 ? "" : (s.rate >= 0.8 ? "warn" : "crit")));
+      fill.style.width = ((s.rate || 0) * 100).toFixed(0) + "%";
+      bar.appendChild(fill); barTd.appendChild(bar); tr.appendChild(barTd);
+      t.appendChild(tr);
+    });
+    const wrap = el("div", "tbl-wrap"); wrap.appendChild(t);
+    box.appendChild(wrap);
+    const src = el("div", "footnote",
+      (ev.mode ? "mode: " + ev.mode : "") + (ev.ts ? " · run: " + ev.ts : "") +
+      (ev.git_sha ? " · " + String(ev.git_sha).slice(0, 8) : ""));
+    box.appendChild(src);
+  }
+
+  async function refresh() {
+    try {
+      const res = await fetch("/metrics/summary", { headers: { "Authorization": "Bearer " + TOKEN } });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const s = await res.json();
+      $("errbox").style.display = "none";
+      $("status-dot").className = "dot";
+      $("status-text").textContent =
+        "up " + Math.round(s.uptime_s / 60) + " min · refreshed " + new Date().toLocaleTimeString();
+      renderTurns(s.turns || {});
+      renderIngest(s.ingestion || {});
+      renderRetrieval(s.retrieval || {});
+      renderEndpoints(s.endpoints || {});
+      renderNodes(s.nodes || {});
+      renderRouting(s.routing || {});
+      renderEvals(s.evals);
+    } catch (e) {
+      $("status-dot").className = "dot err";
+      $("status-text").textContent = "unreachable";
+      const eb = $("errbox");
+      eb.style.display = "block";
+      eb.textContent = "Could not load /metrics/summary (" + e.message + "). Is the sidecar running?";
+    }
+  }
+
+  resolveToken().then((ok) => {
+    if (!ok) {
+      $("status-dot").className = "dot err";
+      $("status-text").textContent = "unauthorized";
+      const eb = $("errbox");
+      eb.style.display = "block";
+      eb.textContent = "Session not authorized — open the dashboard with a valid session token.";
+      return;
+    }
+    refresh();
+    setInterval(refresh, 10000);
+  });
+})();
+</script>
+</body>
+</html>
